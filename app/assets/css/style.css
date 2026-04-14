@@ -1,0 +1,29 @@
+@import url('@picocss/pico/css/pico.lime.min.css');
+
+html, body {
+  background: LemonChiffon;
+}
+
+main {
+}
+
+main.container {
+  display: block;
+  max-width: 800px;
+  padding: 2rem;
+  margin: 2rem auto;
+  min-height: 80vh;
+}
+
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+

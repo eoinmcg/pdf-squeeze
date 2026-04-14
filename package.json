@@ -1,0 +1,20 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@picocss/pico": "^2.1.1",
+    "gsap": "^3.15.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.6.205",
+    "nuxt": "^3.21.2",
+    "vue": "latest"
+  }
+}
