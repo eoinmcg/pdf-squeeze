@@ -90,7 +90,7 @@ function downloadPdf() {
 
 <template>
   <main class="container">
-    <h1> 🍋 PDF Squeezr</h1>
+    <h1> <span>🍋</span> PDF Squeezr</h1>
 
     <p>Got a PDF that is just a load of scanned images and too heavy to send? We got you covered.</p>
 
