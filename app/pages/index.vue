@@ -1,5 +1,9 @@
 <script setup lang="ts">
 
+const { saveFile, getAllMeta, deleteFile } = useFileStorage()
+const router = useRouter()
+
+const docs = ref([]);
 const files = ref([]);
 const compressed = ref();
 const fileInput = ref(null)
@@ -38,16 +42,34 @@ function onFileSelected(e) {
   handleFile(file)
 }
 
-async function handleFile(file) {
-  if (!file) return
+// async function handleFile(file) {
+//   if (!file) return
+//
+//   if (file.type !== "application/pdf") {
+//     console.warn("Only PDF files are allowed")
+//     return
+//   }
+//   files.value.push(file)
+//   squishPdf()
+// }
 
-  if (file.type !== "application/pdf") {
-    console.warn("Only PDF files are allowed")
+async function handleFile(file: File) {
+  if (!file) return
+  if (file.type !== 'application/pdf') {
+    console.warn('Only PDF files are allowed')
     return
   }
-  files.value.push(file)
-  squishPdf()
+
+  try {
+    const meta = await saveFile(file)
+    // Navigate straight to the editor — the file is ready
+    router.push(`/editor/${meta.id}`)
+  } catch (err) {
+    console.error('Failed to save file', err)
+    // show user-facing error toast
+  }
 }
+
 
 function clearFiles() {
   if (!window.confirm('Are you sure?')) return
@@ -68,9 +90,6 @@ async function squishPdf() {
 
   isProcessing.value = false;
 
-  console.log(compressed.value);
-
-
 }
 
 function downloadPdf() {
@@ -86,13 +105,30 @@ function downloadPdf() {
 
 }
 
+const handleDelete = async (file: DocumentMeta) => {
+  if (!window.confirm(`Delete ${file.name}? Are you sure?`)) return;
+
+  await deleteFile(file.id);
+
+  docs.value = await getAllMeta();
+}
+
+onMounted(async () => {
+  docs.value = await getAllMeta()
+})
+
 </script>
 
 <template>
   <main class="container">
-    <h1> <span>🍋</span> PDF Squeezr</h1>
+    <header>
+      <NuxtLink to="/">
+        <h1> <span>📑</span> PDFer</h1>
+      </NuxtLink>
+      <div class="local-only">Local only</div>
+    </header>
 
-    <p>Got a PDF that is just a load of scanned images and too heavy to send? We got you covered.</p>
+    <p>Need to perform quick operations on a PDF? We got you covered</p>
 
     <div v-if="!files.length" class="dropbox" :class="{ 'is-dragover': isDragOver }" @dragover.prevent="onDragOver"
       @dragleave="onDragLeave" @drop.prevent="onDrop" @click="openFileDialog">
@@ -116,6 +152,16 @@ function downloadPdf() {
       </p>
     </span>
 
+    <div class="docs-list card">
+      <h3>Your Files</h3>
+      <p v-for="doc in docs">
+        <button class="secondary link" @click="handleDelete(doc)">Delete</button>
+        <NuxtLink :to="`/editor/${doc.id}`">
+          {{ doc.name }}
+        </NuxtLink>
+      </p>
+    </div>
+
   </main>
 </template>
 
@@ -126,7 +172,8 @@ function downloadPdf() {
   border: 3px dashed rgba(0, 0, 0, 0.2);
   padding: 2rem 1rem;
   text-align: center;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  background: linear-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .9));
 }
 
 .dropbox::before {
@@ -147,7 +194,7 @@ function downloadPdf() {
 .dropbox:hover {
   cursor: pointer;
   background: #eef;
-  border-color: #55f;
+  border-color: darkgreen;
 }
 
 .dropbox.is-dragover {

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import 'assets/css/style.css'
 
+onMounted(async () => {
+  await requestPersistence()
+})
+
 </script>
 
 <template>
@@ -8,6 +12,7 @@ import 'assets/css/style.css'
     <div class="page-wrapper">
       <NuxtPage />
     </div>
+    <div class="aurora-background"></div>
   </NuxtLayout>
 </template>
 
