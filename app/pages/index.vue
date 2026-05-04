@@ -42,17 +42,6 @@ function onFileSelected(e) {
   handleFile(file)
 }
 
-// async function handleFile(file) {
-//   if (!file) return
-//
-//   if (file.type !== "application/pdf") {
-//     console.warn("Only PDF files are allowed")
-//     return
-//   }
-//   files.value.push(file)
-//   squishPdf()
-// }
-
 async function handleFile(file: File) {
   if (!file) return
   if (file.type !== 'application/pdf') {
@@ -70,7 +59,6 @@ async function handleFile(file: File) {
   }
 }
 
-
 function clearFiles() {
   if (!window.confirm('Are you sure?')) return
   files.value = [];
@@ -78,7 +66,6 @@ function clearFiles() {
 }
 
 async function squishPdf() {
-
   isProcessing.value = true;
   compressed.value = null;
   const file = files.value[0];
@@ -121,12 +108,7 @@ onMounted(async () => {
 
 <template>
   <main class="container">
-    <header>
-      <NuxtLink to="/">
-        <h1> <span>📑</span> PDFer</h1>
-      </NuxtLink>
-      <div class="local-only">Local only</div>
-    </header>
+    <Header />
 
     <p>Need to perform quick operations on a PDF? We got you covered</p>
 

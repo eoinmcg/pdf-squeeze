@@ -12,6 +12,9 @@ const pdfDoc = shallowRef(null)
 const loading = ref(true)
 const error = ref(false)
 
+// prevent pdf getting stale
+const pdfReloadKey = ref(0)
+
 const id = route.params.id as string
 
 
@@ -26,9 +29,9 @@ const loadPdf = async () => {
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
     pdfDoc.value = markRaw(doc) // tell Vue: don't touch this object
     fileMetaData.value = await getMeta(id);
+    pdfReloadKey.value++;
   } catch (e) {
     error.value = true
-    console.log('ERROR')
   } finally {
     loading.value = false
   }
@@ -57,19 +60,14 @@ const handlePageDelete = async (payload) => {
 
 <template>
   <main class="container">
-    <header>
-      <NuxtLink to="/">
-        <h1> <span>📑</span> PDFer</h1>
-      </NuxtLink>
-      <div class="local-only">Local only</div>
-    </header>
+    <Header />
 
     <div v-if="loading">
       <span aria-busy="true">Loading</span>
     </div>
     <div v-else-if="pdfDoc">
       <h1>{{ fileMetaData.name }}</h1>
-      <PdfViewer v-if="pdfDoc" :pdf-doc="pdfDoc" @delete-page="handlePageDelete" />
+      <PdfViewer v-if="pdfDoc" :key="pdfReloadKey" :pdf-doc="pdfDoc" @delete-page="handlePageDelete" />
     </div>
     <div v-else-if="error" class="error card">
       Can not load file

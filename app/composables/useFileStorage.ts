@@ -1,4 +1,4 @@
-// composables/useFileStorage.ts
+// compous/useFileStorage.ts
 import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
 import { PDFDocument } from 'pdf-lib'
 
@@ -110,5 +110,45 @@ export const useFileStorage = () => {
     console.log(`Page ${pageIndex + 1} deleted successfully.`)
   }
 
-  return { saveFile, loadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage }
+
+  const mergePdfs = async (id1: string, id2: string, name: string) => {
+    const root = await navigator.storage.getDirectory()
+    const dir = await root.getDirectoryHandle('documents')
+
+    const db = await getDb()
+    const [meta1, meta2] = await Promise.all([
+      db.get('documents', id1),
+      db.get('documents', id2),
+    ])
+    const baseName = (name: string) => name.replace(/\.pdf$/i, '')
+    const mergedName = `${baseName(meta1.name)} + ${baseName(meta2.name)}.pdf`
+
+    const load = async (id: string) => {
+      const fh = await dir.getFileHandle(`${id}.pdf`)
+      return (await fh.getFile()).arrayBuffer()
+    }
+
+    const [buf1, buf2] = await Promise.all([load(id1), load(id2)])
+
+    const baseDoc = await PDFDocument.load(buf1)
+    const donor = await PDFDocument.load(buf2)
+
+    const pageIndices = donor.getPageIndices() // [0, 1, 2, ...]
+    const copiedPages = await baseDoc.copyPages(donor, pageIndices)
+    copiedPages.forEach(page => baseDoc.addPage(page))
+
+    const mergedBytes = await baseDoc.save()
+
+    // Wrap in a File so saveFile handles all the OPFS + IndexedDB bookkeeping
+    const mergedFile = new File(
+      [mergedBytes],
+      mergedName,
+      { type: 'application/pdf' }
+    )
+
+    console.log({ mergedFile })
+    return saveFile(mergedFile)  // returns the new meta
+  }
+
+  return { saveFile, loadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage, mergePdfs }
 }
