@@ -1,10 +1,12 @@
 <script setup lang="ts">
 declare const __GIT_HASH__: string
 declare const __BUILD_TIME__: string
+declare const __APP_VERSION__: string
 const isDev = import.meta.dev
 
 const gitHash = __GIT_HASH__
-const buildTime = formatDate(__BUILD_TIME__) // your existing util!
+const buildTime = formatDate(__BUILD_TIME__)
+const version = __APP_VERSION__
 </script>
 
 <template>
@@ -15,8 +17,9 @@ const buildTime = formatDate(__BUILD_TIME__) // your existing util!
       made by <a href="https://eoinmcgrath.com">eoinmcg</a>
     </p>
     <p>
-      <small v-if="isDev">dev mode</small>
-      <small v-else="!isDev">v{{ gitHash }} · {{ buildTime }}</small>
+      <small v-if="isDev">dev mode: {{ version }}</small>
+      <small v-else="!isDev">v{{ gitHash }} · v{{ version }} · {{ buildTime }}</small>
+
     </p>
   </footer>
 </template>

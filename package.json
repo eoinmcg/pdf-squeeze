@@ -1,7 +1,10 @@
 {
-  "name": "nuxt-app",
+  "name": "pdfd",
   "private": true,
   "type": "module",
+  "version": "0.0.1",
+  "license": "UNLICENSED",
+  "author": "Eoin McGrath <eoin.mcg@gmail.com>",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --host 0.0.0.0",
