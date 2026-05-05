@@ -17,11 +17,11 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
   app: {
-    baseURL: process.env.NODE_ENV === 'production' ? '/pdf-squeeze/' : '/',
+    baseURL: process.env.NODE_ENV === 'production' ? '/pdfd' : '/',
     buildAssetsDir: 'assets',
   },
   runtimeConfig: {
-    name: 'PdfSqueeze',
+    name: 'PDFd',
   },
   devServer: {
     port: 8009,
