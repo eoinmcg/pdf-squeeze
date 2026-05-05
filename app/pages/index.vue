@@ -1,45 +1,13 @@
 <script setup lang="ts">
 
 const { saveFile, getAllMeta, deleteFile } = useFileStorage()
-const router = useRouter()
+const { toast } = useToast()
 
 const docs = ref([]);
 const files = ref([]);
-const compressed = ref();
-const fileInput = ref(null)
-const isDragOver = ref(false)
-const isProcessing = ref(false)
 
-function onDragOver() {
-  isDragOver.value = true
-}
-
-function onDragLeave() {
-  isDragOver.value = false
-}
-
-function onDrop(e) {
-  isDragOver.value = false
-  const file = e.dataTransfer.files[0]
-
-  if (!file) {
-    return;
-  }
-
-  if (file) {
-    console.log("Dropped file:", file)
-    handleFile(file)
-  }
-}
-
-
-function openFileDialog() {
-  fileInput.value?.click()
-}
-
-function onFileSelected(e) {
-  const file = e.target.files[0]
-  handleFile(file)
+async function handleFiles(files: File[]) {
+  await Promise.all(files.map(file => handleFile(file)))
 }
 
 async function handleFile(file: File) {
@@ -51,45 +19,15 @@ async function handleFile(file: File) {
 
   try {
     const meta = await saveFile(file)
-    // Navigate straight to the editor — the file is ready
-    router.push(`/editor/${meta.id}`)
+    if (meta.exists) {
+      return toast('File exists')
+    }
+    docs.value = await getAllMeta()
+    toast('FILE ADDED', 'info')
   } catch (err) {
     console.error('Failed to save file', err)
-    // show user-facing error toast
+    toast('FAILED TO SAVE FILE', 'error')
   }
-}
-
-function clearFiles() {
-  if (!window.confirm('Are you sure?')) return
-  files.value = [];
-  compressed.value = null;
-}
-
-async function squishPdf() {
-  isProcessing.value = true;
-  compressed.value = null;
-  const file = files.value[0];
-  compressed.value = await compressPdf(file, {
-    format: "image/jpeg", // much smaller than PNG
-    quality: 0.7,
-    scale: 1
-  });
-
-  isProcessing.value = false;
-
-}
-
-function downloadPdf() {
-  // Download
-  const name = files.value[0].name.replace('.pdf', '_compressed.pdf')
-  const url = URL.createObjectURL(compressed.value);
-  const a = document.createElement("a");
-  a.href = url;
-  // console.log(files[0].value.name)
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
-
 }
 
 const handleDelete = async (file: DocumentMeta) => {
@@ -98,6 +36,7 @@ const handleDelete = async (file: DocumentMeta) => {
   await deleteFile(file.id);
 
   docs.value = await getAllMeta();
+  toast('FILE DELETED', 'info')
 }
 
 onMounted(async () => {
@@ -110,86 +49,36 @@ onMounted(async () => {
   <main class="container">
     <Header />
 
-    <p>Need to perform quick operations on a PDF? We got you covered</p>
 
-    <div v-if="!files.length" class="dropbox" :class="{ 'is-dragover': isDragOver }" @dragover.prevent="onDragOver"
-      @dragleave="onDragLeave" @drop.prevent="onDrop" @click="openFileDialog">
-      Drag PDF here or click to upload
-    </div>
-    <input ref="fileInput" type="file" class="hidden-input" accept="application/pdf" @change="onFileSelected" />
-    <span v-for="file in files">
-      <p>
-        <button v-if="!compressed" :disabled="isProcessing" class="secondary" @click="clearFiles">cancel</button>
-        {{ file.name }} {{ Math.floor(file.size / 1000) }}kb
-        <button v-if="!compressed" :disabled="isProcessing" :aria-busy="isProcessing" @click="squishPdf">
-          {{ isProcessing ? 'Squishing' : 'Squish' }}
-        </button>
-        <PdfVice v-if="isProcessing" />
-        <span v-if="compressed">
-          Compresed: {{ compressed.size / 1000 }}kb <br />
-          Saving: {{ Math.ceil(100 - (compressed.size / file.size) * 100) }}%
-          <button @click="downloadPdf">Download</button>
-          <button @click="clearFiles">Clear</button>
-        </span>
-      </p>
-    </span>
+    <DropBox @files="handleFiles" />
 
-    <div class="docs-list card">
+    <div class="docs-list card" v-if="docs.length">
       <h3>Your Files</h3>
-      <p v-for="doc in docs">
-        <button class="secondary link" @click="handleDelete(doc)">Delete</button>
+      <div v-for="doc in docs" class="doc">
+        <UiDeleteButton @click="handleDelete(doc)" />
         <NuxtLink :to="`/editor/${doc.id}`">
+          <Icon name="fa7-solid:pencil" />
           {{ doc.name }}
         </NuxtLink>
-      </p>
+        <p class="info">
+          Added: {{ formatDate(doc.createdAt) }}
+          {{ formatBytes(doc.size) }}
+        </p>
+      </div>
     </div>
 
   </main>
 </template>
 
 <style scoped>
-.dropbox {
-  position: relative;
-  margin: 2rem 0;
-  border: 3px dashed rgba(0, 0, 0, 0.2);
-  padding: 2rem 1rem;
-  text-align: center;
-  transition: all 0.2s;
-  background: linear-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .9));
+.doc p.info {
+  opacity: .4;
+  font-size: 90%;
+  text-align: right;
+  transition: all .3s ease-in-out;
 }
 
-.dropbox::before {
-  content: "";
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 70%;
-  height: 70%;
-  background-image: url('/pdf.svg');
-  background-repeat: no-repeat;
-  background-position: top left;
-  background-size: contain;
-  opacity: 0.2;
-  pointer-events: none;
-}
-
-.dropbox:hover {
-  cursor: pointer;
-  background: #eef;
-  border-color: darkgreen;
-}
-
-.dropbox.is-dragover {
-  background: #eef;
-  border-color: #55f;
-}
-
-button.secondary {
-  /* background: #fff; */
-
-}
-
-.hidden-input {
-  display: none;
+.doc:hover p.info {
+  opacity: .8;
 }
 </style>

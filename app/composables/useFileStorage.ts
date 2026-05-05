@@ -1,19 +1,38 @@
-// compous/useFileStorage.ts
 import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
 import { PDFDocument } from 'pdf-lib'
 
 const DB_NAME = 'pdf-editor'
 const DB_VERSION = 1
 
-const getDb = () => openDB(DB_NAME, DB_VERSION, {
-  upgrade(db) {
-    db.createObjectStore('documents', { keyPath: 'id' })
-  }
-})
+const getDb = () =>
+  openDB(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      const store = db.createObjectStore('documents', { keyPath: 'id' })
+      store.createIndex('contentHash', 'contentHash', { unique: false })
+    }
+  })
 
 export const useFileStorage = () => {
 
   const saveFile = async (file: File) => {
+
+    const db = await getDb()
+    const arrayBuffer = await file.arrayBuffer()
+    const contentHash = await hashBytes(arrayBuffer)
+
+    const tx = db.transaction('documents', 'readonly')
+    const store = tx.objectStore('documents')
+    const index = store.index('contentHash')
+
+    const existing = await index.get(contentHash)
+    if (existing) {
+      console.log("Duplicate upload skipped")
+      existing.exists = true;
+      return existing
+    } else {
+      console.log('HASH DOES NOT EXIST', contentHash)
+    }
+
     const id = crypto.randomUUID()
 
     // 1. Write bytes to OPFS
@@ -27,14 +46,14 @@ export const useFileStorage = () => {
     // 2. Write metadata to IndexedDB
     const meta = {
       id,
-      name: file.name,
+      name: file.name.replace('.pdf', ''),
       size: file.size,
+      contentHash,
       createdAt: Date.now(),
       lastOpenedAt: Date.now(),
       annotationCount: 0,
       pageCount: null, // fill this in after PDF.js loads the doc
     }
-    const db = await getDb()
     await db.put('documents', meta)
 
     return meta
@@ -47,11 +66,17 @@ export const useFileStorage = () => {
     return fh.getFile() // returns a File object, ready for PDF.js
   }
 
+  async function hashBytes(bytes) {
+    const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(hashBuffer)]
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
 
   const getMeta = async (id: string) => {
     const db = await getDb()
     const existing = await db.get('documents', id);
-    console.log({ id, existing })
     return existing;
 
   }
@@ -107,9 +132,12 @@ export const useFileStorage = () => {
     await writable.write(pdfBytes)
     await writable.close()
 
-    console.log(`Page ${pageIndex + 1} deleted successfully.`)
+    // 5. update meta
+    const contentHash = hashBytes(pdfBytes);
+    updateMeta(id, {
+      contentHash
+    });
   }
-
 
   const mergePdfs = async (id1: string, id2: string, name: string) => {
     const root = await navigator.storage.getDirectory()
@@ -146,7 +174,6 @@ export const useFileStorage = () => {
       { type: 'application/pdf' }
     )
 
-    console.log({ mergedFile })
     return saveFile(mergedFile)  // returns the new meta
   }
 

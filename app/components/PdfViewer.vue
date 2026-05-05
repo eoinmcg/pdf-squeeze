@@ -8,9 +8,12 @@ const props = defineProps({
   pdfDoc: {
     type: Object,
     required: true
+  },
+  id: {
+    type: String,
+    required: true
   }
 })
-
 
 const emit = defineEmits(['page-change', 'ready', 'delete-page'])
 
@@ -73,21 +76,15 @@ onMounted(async () => {
   totalPages.value = props.pdfDoc.numPages
   await renderPage(1)
   emit('ready', { total: totalPages.value })
+  console.log(props)
 })
 
 onBeforeUnmount(() => {
   if (renderTask) renderTask.cancel()
 })
 const handleDelete = async () => {
+  if (!window.confirm('Are you sure?')) return
   emit('delete-page', { page: currentPage.value })
-}
-
-const handleAdd = async () => {
-  console.log('ADD PAGE at', currentPage.value);
-}
-
-const handleAnnotation = async () => {
-  console.log('ADD ANNOTATION at', currentPage.value);
 }
 
 
@@ -110,8 +107,9 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
     </div>
     <div class="page-nav">
       <button @click="handleDelete">Delete page</button>
-      <button @click="handleAdd">Add page</button>
-      <button @click="handleAnnotation">Add annotaion</button>
+      <button @click="navigateTo(`/merge/${props.id}`)">Merge</button>
+      <button @click="navigateTo(`/compress/${props.id}`)">Compress</button>
+      <button @click="navigateTo(`/share/${props.id}`)">Share</button>
     </div>
 
   </div>

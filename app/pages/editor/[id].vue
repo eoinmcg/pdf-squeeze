@@ -1,13 +1,20 @@
 <script setup lang="ts">
-// pages/editor/[id].vue
 
 import * as pdfjsLib from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
-const { loadFile, updateMeta, getMeta, deleteFile, deletePage } = useFileStorage()
+const { loadFile, updateMeta, getMeta, deletePage } = useFileStorage()
 const route = useRoute()
-const fileMetaData = ref({})
+const fileMetaData = ref({
+  id: null,
+  name: '',
+  size: 0,
+  contentHash: '',
+  pageCount: 0,
+  lastOpenedAt: null,
+  createdAt: null,
+});
 const pdfDoc = shallowRef(null)
 const loading = ref(true)
 const error = ref(false)
@@ -15,45 +22,54 @@ const error = ref(false)
 // prevent pdf getting stale
 const pdfReloadKey = ref(0)
 
-const id = route.params.id as string
+const ID = route.params.id as string
 
+const { toast } = useToast()
 
 onMounted(async () => {
   await loadPdf();
 })
 
 const loadPdf = async () => {
+
+  let meta = {}
+
   try {
-    const file = await loadFile(id)
+    const file = await loadFile(ID)
     const arrayBuffer = await file.arrayBuffer()
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+
+    meta.lastOpenedAt = Date.now();
+    meta.pageCount = doc.numPages;
+
     pdfDoc.value = markRaw(doc) // tell Vue: don't touch this object
-    fileMetaData.value = await getMeta(id);
-    pdfReloadKey.value++;
+    fileMetaData.value = await getMeta(ID);
+    pdfReloadKey.value++; // force reload
   } catch (e) {
     error.value = true
   } finally {
     loading.value = false
   }
 
-
-  // Now you have page count — backfill it into IndexedDB
-  await updateMeta(route.params.id as string, {
-    lastOpenedAt: Date.now(),
-  })
+  if (Object.keys(meta).length) {
+    await updateMeta(ID, meta)
+  }
 
 }
 
 const handlePageDelete = async (payload) => {
   try {
-    await deletePage(id, payload.page - 1)
-    console.log('deleted page')
+    await deletePage(ID, payload.page - 1)
     await loadPdf();
-    console.log('reloaded page')
-    // console.log('RELAD')
+    toast('Page deleted', 'info')
   } catch (e) {
     console.log('Error: ', e)
   }
+}
+
+const saveMetadata = async () => {
+  await updateMeta(ID, { name: fileMetaData.value.name })
+  toast('RENAMED')
 }
 </script>
 
@@ -66,8 +82,10 @@ const handlePageDelete = async (payload) => {
       <span aria-busy="true">Loading</span>
     </div>
     <div v-else-if="pdfDoc">
-      <h1>{{ fileMetaData.name }}</h1>
-      <PdfViewer v-if="pdfDoc" :key="pdfReloadKey" :pdf-doc="pdfDoc" @delete-page="handlePageDelete" />
+      <EditableTitle v-model="fileMetaData.name" @update:modelValue="saveMetadata" />
+
+      <PdfViewer v-if="pdfDoc" :key="pdfReloadKey" :id="ID" :pdf-doc="pdfDoc" @delete-page="handlePageDelete" />
+
     </div>
     <div v-else-if="error" class="error card">
       Can not load file

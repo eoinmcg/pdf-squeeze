@@ -13,12 +13,30 @@ useHead({
   link: [{ rel: "icon", type: "image/png", href: favicon }],
 })
 
+const { toasts, closeToast } = useToast()
+
 </script>
 
 <template>
 
-  <slot />
+  <div class="app-shell">
+    <slot />
 
-  <Footer />
+    <Footer />
+
+    <TransitionGroup name="slide" tag="div" class="toast-container">
+      <UiToast v-for="toast in toasts" :key="toast.id" :message="toast.message" :type="toast.type"
+        :duration="toast.duration" @close="closeToast(toast.id)" />
+    </TransitionGroup>
+  </div>
 
 </template>
+
+<style>
+.toast-container {
+  top: 0;
+  right: 10px;
+  position: fixed;
+  z-index: 2000;
+}
+</style>

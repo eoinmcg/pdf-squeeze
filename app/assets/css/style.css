@@ -50,7 +50,7 @@
   --space-6: 2rem;
 
  /* Action colors */
-  --btn-submit-bg: var(--pico-primary);
+  --btn-submit-bg: orangered;
   --btn-submit-text: #fff;
 
   --btn-cancel-bg: hsl(54 20% 92%);
@@ -84,6 +84,7 @@
 html, body {
   font-family: var(--font-sans);
   color: var(--color-text);
+  min-width: 300px;
   min-height: 100%;
 }
 
@@ -95,8 +96,13 @@ p, li {
 /* Headings: slightly stronger than Pico defaults */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: normal;
   color: var(--color-text);
+}
+
+hr {
+  opacity: 0.5;
+  margin: 2rem 0;
 }
 
 .card {
@@ -106,6 +112,11 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(0,0,0,0.5);
   box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
   padding: 2rem;
+}
+
+
+.card p, li {
+  color: #fff;
 }
 
 .card h3 {
@@ -120,6 +131,8 @@ h1, h2, h3, h4, h5, h6 {
 .card a:hover {
   color: hotpink;
 }
+
+/* buttons */
 
 /* Card-like surfaces */
 .surface {
@@ -153,7 +166,7 @@ button:hover,
 /* -------------------------------------------------------
    Submit (Primary)
    ------------------------------------------------------- */
-.btn-submit {
+button.submit {
   background: var(--btn-submit-bg);
   color: var(--btn-submit-text);
   border: none;
@@ -165,7 +178,7 @@ button:hover,
 /* -------------------------------------------------------
    Cancel (Neutral)
    ------------------------------------------------------- */
-.btn-cancel {
+button.cancel {
   background: var(--btn-cancel-bg);
   color: var(--btn-cancel-text);
   border: 1px solid var(--color-border);
@@ -177,24 +190,24 @@ button:hover,
 /* -------------------------------------------------------
    Clear (Minimal)
    ------------------------------------------------------- */
-.btn-clear {
+button.clear {
   background: var(--btn-clear-bg);
   color: var(--btn-clear-text);
   border: 1px solid var(--btn-clear-border);
 }
-.btn-clear:hover {
+button.clear:hover {
   background: var(--btn-clear-bg-hover);
 }
 
 /* -------------------------------------------------------
    Delete (Destructive)
    ------------------------------------------------------- */
-.btn-delete {
+button.delete {
   background: var(--btn-delete-bg);
   color: var(--btn-delete-text);
   border: none;
 }
-.btn-delete:hover {
+button.delete:hover {
   background: var(--btn-delete-bg-hover);
 }
 
@@ -232,26 +245,6 @@ button:hover,
   
   /* Adds a slight grain if you want that textured look in the image */
   background-blend-mode: normal;
-}
-
-header {
-  border-bottom: 1px solid rgba(255,255,255,.4);
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-}
-
-header a { text-decoration: none; }
-
-.local-only {
-  font-size: 80%;
-  font-weight: thin;
-  padding: .75rem 1rem;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.3);
-  line-height: .1;
-  height: 1.5rem;
-  border-radius: var(--radius-lg);
 }
 
 main.container {
