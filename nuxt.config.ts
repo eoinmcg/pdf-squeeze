@@ -1,3 +1,8 @@
+import { execSync } from 'child_process'
+
+const gitHash = execSync('git rev-parse --short HEAD').toString().trim()
+const buildTime = new Date().toISOString()
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-05-05',
   ssr: false,
@@ -20,4 +25,10 @@ export default defineNuxtConfig({
     port: 8009,
   },
   modules: ['@nuxt/icon'],
+  vite: {
+    define: {
+      __GIT_HASH__: JSON.stringify(gitHash),
+      __BUILD_TIME__: JSON.stringify(buildTime),
+    },
+  },
 })
