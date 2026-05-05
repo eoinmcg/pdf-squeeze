@@ -1,7 +1,7 @@
 <template>
   <header>
     <NuxtLink to="/">
-      <div class="logo"> 📑 PDF'd</div>
+      <div class="logo"> 📑 PDFd</div>
     </NuxtLink>
     <NuxtLink to="/about">
       <div class="local-only">100% Private</div>
