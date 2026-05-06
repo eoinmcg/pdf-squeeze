@@ -68,11 +68,17 @@ const docNames = computed(() =>
         <VueDraggable v-model="selected" :item-key="(s) => s" tag="ul" class="reorder" :animation="200"
           ghost-class="dragging-ghost" :force-fallback="true" :fallback-tolerance="5">
           <template #item="{ element }">
-            <li>{{ docNames[element] }}</li>
+            <li>
+              <Icon name="fa7-solid:reorder" />
+              {{ docNames[element] }}
+            </li>
           </template>
         </VueDraggable>
         <p>
-          <small class="hint">Drag items to change order</small>
+          <small class="hint">
+            <Icon name="fa7-solid:hand-point-right" />
+            Drag items to change order
+          </small>
         </p>
         <button @click="mergeSelected">Merge</button>
       </div>

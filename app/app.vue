@@ -17,10 +17,6 @@ onMounted(async () => {
 </template>
 
 <style>
-.page-wrapper {
-  position: relative;
-}
-
 .page-enter-active,
 .page-leave-active {
   transition: transform 0.2s ease, opacity 0.2s ease;

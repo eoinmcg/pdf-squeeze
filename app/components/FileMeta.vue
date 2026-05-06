@@ -14,9 +14,11 @@ const props = defineProps({
 
 <template>
   <div class="file-meta">
-    <NuxtLink :to="`/editor/${ID}`">
-      <h3>{{ data.name }}</h3>
-    </NuxtLink>
+    <h3>
+      <NuxtLink :to="`/editor/${ID}`">
+        {{ data.name }}
+      </NuxtLink>
+    </h3>
     <p>
       <b>Size:</b> {{ formatBytes(data.size) }} <br />
       <b>Added:</b> {{ formatDate(data.createdAt) }} <br />
@@ -26,3 +28,9 @@ const props = defineProps({
     </p>
   </div>
 </template>
+
+<style scoped>
+h3 a {
+  text-decoration: none;
+}
+</style>

@@ -18,18 +18,52 @@ function handleDelete(doc: Partial<DocMeta>) {
 <template>
   <div class="docs-list card" v-if="docs.length">
     <h3>Your Files</h3>
+    <!-- <input type="search" name="search" placeholder="Search" aria-label="Search" /> -->
     <TransitionGroup name="list" tag="div" class="doc-container">
+
       <div v-for="doc in docs" class="doc" :key="doc.id">
-        <UiDeleteButton @click="handleDelete(doc)" />
-        <NuxtLink :to="`/editor/${doc.id}`">
-          <Icon name="fa7-solid:pencil" />
-          {{ doc.name }}
-        </NuxtLink>
-        <p class="info">
-          Added: {{ formatDate(doc.createdAt) }}
-          {{ formatBytes(doc.size) }}
-        </p>
+        <div class="list-item-row">
+          <!-- 1. Delete Button -->
+          <div class="action-left">
+            <UiDeleteButton @click="handleDelete(doc)" />
+          </div>
+
+          <!-- 2. Main Content (The "Stretchy" part) -->
+          <div class="content-main">
+            <NuxtLink :to="`/editor/${doc.id}`">
+              <Icon name="fa7-solid:pencil" />
+              {{ doc.name }}
+            </NuxtLink>
+            <small>
+              Added: {{ formatDate(doc.createdAt) }} •
+              {{ formatBytes(doc.size) }}
+            </small>
+          </div>
+
+          <!-- 3. Extra Items Dropdown -->
+          <div class="action-right">
+            <details role="list">
+              <summary aria-haspopup="listbox">
+              </summary>
+              <ul role="listbox">
+                <li>
+                  <NuxtLink :to="`/editor/${doc.id}`">Edit</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink :to="`/compress/${doc.id}`">Compress</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink :to="`/share/${doc.id}`">Share</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink :to="`/download/${doc.id}`">Download</NuxtLink>
+                </li>
+              </ul>
+            </details>
+          </div>
+        </div>
       </div>
+
     </TransitionGroup>
   </div>
 </template>
@@ -77,5 +111,50 @@ function handleDelete(doc: Partial<DocMeta>) {
   position: absolute;
   width: 100%;
   /* Match the width of your container */
+}
+
+.list-item-row {
+  display: flex;
+  align-items: center;
+  /* Vertical centering */
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-left {
+  flex-shrink: 0;
+  /* Don't let button squash */
+}
+
+.content-main {
+  flex-grow: 1;
+  /* Take up all available remaining space */
+  display: flex;
+  flex-direction: column;
+  /* Stack Title and Meta */
+  min-width: 0;
+  /* Prevents text overflow from breaking flexbox */
+}
+
+.content-main strong,
+.content-main small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+ul li {
+  list-style: none;
+}
+
+.action-right {
+  flex-shrink: 0;
+}
+
+/* Pico Dropdown specific tweak: prevent margin bottom inside list */
+.action-right details {
+  margin-bottom: 0;
 }
 </style>

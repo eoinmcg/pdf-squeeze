@@ -12,6 +12,10 @@ const compressed = ref()
 const isProcessing = ref(false)
 const copySaved = ref(false)
 
+const saving = computed(() => {
+  return Math.ceil(100 - (compressed.value.size / fileMeta.value.size) * 100)
+})
+
 
 onMounted(async () => {
   fileMeta.value = await getMeta(ID)
@@ -68,19 +72,31 @@ async function savePdf() {
     <Header />
     <span v-if="fileMeta">
       <FileMeta :data="fileMeta" <hr />
-
       <p>
         <button v-if="!compressed" :disabled="isProcessing" :aria-busy="isProcessing" @click="handlePdfCompress()"
           class="submit">
           {{ isProcessing ? 'Compressing' : 'Compress' }}
         </button>
-        <PdfVice v-if="isProcessing" />
+        <UiProgress v-if="isProcessing" />
         <span v-if="compressed">
+          <UiProgress :value="saving" />
           Compresed: {{ formatBytes(compressed.size) }}<br />
-          Saving: {{ Math.ceil(100 - (compressed.size / fileMeta.size) * 100) }}%
-          <button @click="downloadPdf" class="submit">Download</button>
-          <button v-if="!copySaved" @click="savePdf" class="submit">Save Copy</button>
-          <button @click="clearFile" class="clear">Clear</button>
+          Saving: {{ saving }}%
+          <hr />
+          <div class="button-group">
+            <button @click="downloadPdf" class="submit">
+              <Icon name="fa7-solid:download" />
+              Download
+            </button>
+            <button v-if="!copySaved" @click="savePdf" class="submit">
+              <Icon name="fa7-solid:copy" />
+              Save Copy
+            </button>
+            <button @click="clearFile" class="cancel">
+              <Icon name="fa7-solid:xmark-circle" />
+              Clear
+            </button>
+          </div>
         </span>
       </p>
 
