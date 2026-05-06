@@ -10,7 +10,7 @@ onMounted(async () => {
 <template>
   <NuxtLayout>
     <div class="page-wrapper">
-      <NuxtPage />
+      <NuxtPage :page-key="route => route.fullPath" />
     </div>
     <div class="aurora-background"></div>
   </NuxtLayout>

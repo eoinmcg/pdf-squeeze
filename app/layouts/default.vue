@@ -18,7 +18,6 @@ const { toasts, closeToast } = useToast()
 </script>
 
 <template>
-
   <div class="app-shell">
     <slot />
 
@@ -29,7 +28,6 @@ const { toasts, closeToast } = useToast()
         :duration="toast.duration" @close="closeToast(toast.id)" />
     </TransitionGroup>
   </div>
-
 </template>
 
 <style>
@@ -38,5 +36,24 @@ const { toasts, closeToast } = useToast()
   right: 10px;
   position: fixed;
   z-index: 2000;
+}
+
+/* Slide animation */
+.slide-enter-active,
+.slide-leave-active {
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  max-height: 500px;
+  /* large enough to fit content */
+  opacity: 1;
 }
 </style>

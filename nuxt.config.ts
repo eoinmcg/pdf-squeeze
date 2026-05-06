@@ -15,11 +15,13 @@ export default defineNuxtConfig({
       routes: ['/']
     }
   },
-  devtools: { enabled: true },
   app: {
     baseURL: process.env.NODE_ENV === 'production' ? '/pdfd' : '/',
     buildAssetsDir: 'assets',
+    pageTransition: { name: 'page', mode: 'out-in' },
+    // layoutTransition: false // Temporary debug
   },
+  devtools: { enabled: true },
   runtimeConfig: {
     name: 'PDFd',
   },

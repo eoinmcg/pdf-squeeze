@@ -6,7 +6,6 @@
       Merge, compress, delete pages, and add annotations in seconds.
       Everything runs locally in your browser. Your files never leave your device.
     </p>
-
   </main>
 </template>
 

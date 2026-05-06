@@ -4,6 +4,9 @@
       <div class="logo"> 📑 PDFd</div>
     </NuxtLink>
     <NuxtLink to="/about">
+      <Icon name="fa7-solid:circle-question" class="icon" />
+    </NuxtLink>
+    <NuxtLink to="/about">
       <div class="local-only">100% Private</div>
     </NuxtLink>
   </header>
