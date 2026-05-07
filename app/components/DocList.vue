@@ -49,19 +49,19 @@ function handleDelete(doc: Partial<DocMeta>) {
                 <li>
                   <NuxtLink :to="`/compress/${doc.id}`">
                     <Icon name="fa7-solid:compress-arrows-alt" />
-                    Compress
+                    {{ $t('compress') }}
                   </NuxtLink>
                 </li>
                 <li>
                   <NuxtLink :to="`/share/${doc.id}`">
                     <Icon name="fa7-solid:share-alt" />
-                    Share
+                    {{ $t('share') }}
                   </NuxtLink>
                 </li>
                 <li>
                   <NuxtLink :to="`/download/${doc.id}`">
                     <Icon name="fa7-solid:download" />
-                    Download
+                    {{ $t('download') }}
                   </NuxtLink>
                 </li>
               </ul>
@@ -157,14 +157,14 @@ ul li {
   list-style: none;
 }
 
-li:first-child {
-  margin-top: 2rem;
+ul {
+  margin-right: 2rem;
 }
 
 li a {
   display: block;
   color: #fff;
-  font-size: 80%;
+  font-size: 70%;
   border: 1px solid rgba(255, 255, 255, 0.5);
   width: 100%;
   padding: 5px;

@@ -2,7 +2,7 @@
 
 const { loadFile, getMeta } = useFileStorage()
 const { toast } = useToast()
-
+const { t } = useI18n()
 
 const fileMeta = ref()
 const filePdf = ref()
@@ -48,14 +48,23 @@ async function sharePdf() {
 
 <template>
   <main class="container">
-    <h3>SHARE</h3>
+    <h3>{{ $t('share') }}</h3>
 
     <Loading v-if="isLoading" />
 
     <div v-else>
       <FileMeta :data="fileMeta" <hr />
-      <button class="submit" @click="downloadPdf">Download</button>
-      <button class="submit" @click="sharePdf">Share</button>
+      <div class="button-group">
+        <button class="submit" @click="downloadPdf">
+          <Icon name="fa7-solid:download" />
+          {{ $t('download') }}
+        </button>
+
+        <button class="submit" @click="sharePdf">
+          <Icon name="fa7-solid:share-alt" />
+          {{ $t('share') }}
+        </button>
+      </div>
     </div>
 
   </main>

@@ -2,6 +2,7 @@
 
 const { saveFile, loadFile, getMeta } = useFileStorage()
 const { toast } = useToast()
+const { t } = useI18n()
 
 const route = useRoute()
 const ID = route.params.id as string
@@ -58,10 +59,10 @@ async function savePdf() {
       return toast('File exists')
     }
     copySaved.value = true
-    toast('ADDED: ' + newFileName, 'info')
+    toast(t('added') + ': ' + newFileName, 'info')
   } catch (err) {
     console.error('Failed to save file', err)
-    toast('FAILED TO SAVE FILE', 'error')
+    toast(t('save_file_failed'), 'error')
   }
 }
 
@@ -74,26 +75,26 @@ async function savePdf() {
       <p>
         <button v-if="!compressed" :disabled="isProcessing" :aria-busy="isProcessing" @click="handlePdfCompress()"
           class="submit">
-          {{ isProcessing ? 'Compressing' : 'Compress' }}
+          {{ isProcessing ? $t('compressing') : $t('compress') }}
         </button>
         <UiProgress v-if="isProcessing" />
         <span v-if="compressed">
           <UiProgress :value="saving" />
-          Compresed: {{ formatBytes(compressed.size) }}<br />
-          Saving: {{ saving }}%
+          {{ $t('compressed') }}: {{ formatBytes(compressed.size) }}<br />
+          {{ $t('saving') }}: {{ saving }}%
           <hr />
           <div class="button-group">
             <button @click="downloadPdf" class="submit">
               <Icon name="fa7-solid:download" />
-              Download
+              {{ $t('download') }}
             </button>
             <button v-if="!copySaved" @click="savePdf" class="submit">
               <Icon name="fa7-solid:copy" />
-              Save Copy
+              {{ $t('save_copy') }}
             </button>
             <button @click="clearFile" class="cancel">
               <Icon name="fa7-solid:xmark-circle" />
-              Clear
+              {{ $t('clear') }}
             </button>
           </div>
         </span>

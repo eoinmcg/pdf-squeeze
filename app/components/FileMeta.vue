@@ -20,11 +20,11 @@ const props = defineProps({
       </NuxtLink>
     </h3>
     <p>
-      <b>Size:</b> {{ formatBytes(data.size) }} <br />
-      <b>Added:</b> {{ formatDate(data.createdAt) }} <br />
-      <b>Last opened:</b> {{ formatDate(data.lastOpenedAt) }} <br />
-      <b>Pages: </b> {{ data.pageCount }} <br />
-      <b>Annotations: </b> {{ data.annotationCount }} <br />
+      <b>{{ $t('size') }}:</b> {{ formatBytes(data.size) }} <br />
+      <b>{{ $t('added') }}:</b> {{ formatDate(data.createdAt) }} <br />
+      <b>{{ $t('last_opened') }}:</b> {{ formatDate(data.lastOpenedAt) }} <br />
+      <b>{{ $t('pages') }}: </b> {{ data.pageCount }} <br />
+      <b>{{ $t('annotations') }}: </b> {{ data.annotationCount }} <br />
     </p>
   </div>
 </template>

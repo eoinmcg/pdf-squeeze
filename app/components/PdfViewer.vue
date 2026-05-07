@@ -97,7 +97,7 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
 
     <div class="canvas-wrap">
       <canvas ref="canvasRef" class="pdf-canvas" />
-      <div v-if="isRendering" class="render-overlay">Rendering...</div>
+      <div v-if="isRendering" class="render-overlay">{{ $t('rendering') }}</div>
     </div>
 
     <div class="page-nav">
