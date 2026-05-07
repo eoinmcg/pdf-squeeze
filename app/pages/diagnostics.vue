@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { toggleDebug, isDebug } = useDebug()
 const stats = ref({
   secure: false,
   crypto: false,
@@ -48,6 +49,11 @@ const runDiagnostics = async () => {
 }
 
 onMounted(runDiagnostics)
+
+const handleToggleDebug = () => {
+  toggleDebug()
+}
+
 </script>
 
 <template>
@@ -98,6 +104,14 @@ onMounted(runDiagnostics)
             <td><strong>Persistence</strong></td>
             <td>{{ stats.persistence }}</td>
           </tr>
+          <tr>
+            <td><strong>Debug Mode</strong></td>
+            <td>
+              <button @click="handleToggleDebug" :class="{ active: isDebug }" class="debug">
+                {{ isDebug }}
+              </button>
+            </td>
+          </tr>
         </tbody>
       </table>
 
@@ -114,5 +128,20 @@ onMounted(runDiagnostics)
 mark {
   padding: 2px 8px;
   border-radius: 4px;
+}
+
+button {
+  border: 1px solid crimson;
+  background: orangered;
+}
+
+button.debug.active {
+  border: 1px solid black;
+  background: crimson;
+}
+
+button.debug {
+  border: 1px solid white;
+  background: lightblue;
 }
 </style>

@@ -1,6 +1,42 @@
+<script setup lang="ts">
+const { toggleDebug, isDebug } = useDebug()
+const { toast } = useToast()
+
+const router = useRouter()
+
+let tapCount = 0
+let tapTimer: any = null
+
+const handleLogoTap = () => {
+  tapCount++
+
+  console.log(tapCount)
+  if (tapCount === 1) {
+    // Wait to see if another tap follows
+    tapTimer = setTimeout(() => {
+      if (tapCount === 1) {
+        // Just a single tap, go home
+        router.push('/')
+      }
+      tapCount = 0
+    }, 300)
+  } else if (tapCount === 3) {
+    // Success! Triple tap
+    clearTimeout(tapTimer)
+    tapCount = 0
+
+    toggleDebug()
+
+    toast('DEBUG MODE: ' + isDebug.value, 'info')
+
+    if (navigator.vibrate) navigator.vibrate([50, 30, 50])
+    // alert('🛠️ Debug Mode Toggled') // Optional feedback
+  }
+}
+</script>
 <template>
   <header>
-    <NuxtLink to="/">
+    <NuxtLink to="/" @click.prevent="handleLogoTap">
       <div class="logo"> 📑 PDFd</div>
     </NuxtLink>
     <NuxtLink to="/about">

@@ -1,10 +1,6 @@
 import { PDFDocument } from 'pdf-lib'
 import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
 
-// fallback for dev - cryptp.subtle
-// not available when testing over dev network
-import { sha256 } from 'js-sha256';
-
 const DB_NAME = 'pdf-editor'
 const DB_VERSION = 2
 
@@ -71,19 +67,10 @@ export const useFileStorage = () => {
   }
 
   async function hashBytes(bytes) {
-    // const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-    // return [...new Uint8Array(hashBuffer)]
-    //   .map(b => b.toString(16).padStart(2, "0"))
-    //   .join("");
-
-    if (window.isSecureContext && crypto.subtle) {
-      const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, '0')).join('');
-    } else {
-      // Fallback for insecure contexts
-      return sha256(bytes);
-    }
+    const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(hashBuffer)]
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
 
   }
 
