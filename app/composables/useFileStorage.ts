@@ -1,12 +1,12 @@
-import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
 import { PDFDocument } from 'pdf-lib'
+import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
 
 // fallback for dev - cryptp.subtle
 // not available when testing over dev network
 import { sha256 } from 'js-sha256';
 
 const DB_NAME = 'pdf-editor'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 const getDb = () =>
   openDB(DB_NAME, DB_VERSION, {
