@@ -19,6 +19,7 @@ const { toasts, closeToast } = useToast()
 
 <template>
   <div class="app-shell">
+    <Header />
     <slot />
 
     <Footer />

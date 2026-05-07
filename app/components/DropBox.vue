@@ -28,7 +28,7 @@ function onFileSelected(e: Event) {
   <div>
     <div class="dropbox" :class="{ 'is-dragover': isDragOver }" @dragover.prevent="onDragOver" @dragleave="onDragLeave"
       @drop.prevent="onDrop" @click="openFileDialog">
-      <p>Drag PDF here or click to upload</p>
+      <p>{{ $t('dropbox_drag') }}</p>
     </div>
     <input ref="fileInput" type="file" class="hidden-input" accept="application/pdf" multiple
       @change="onFileSelected" />

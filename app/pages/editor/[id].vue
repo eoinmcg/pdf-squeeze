@@ -76,11 +76,8 @@ const saveMetadata = async () => {
 
 <template>
   <main class="container">
-    <Header />
 
-    <div v-if="loading">
-      <span aria-busy="true">Loading</span>
-    </div>
+    <Loading v-if="loading" />
     <div v-else-if="pdfDoc">
       <EditableTitle v-model="fileMetaData.name" @update:modelValue="saveMetadata" />
 
@@ -88,7 +85,7 @@ const saveMetadata = async () => {
 
     </div>
     <div v-else-if="error" class="error card">
-      Can not load file
+      {{ $t('cannot_load_file') }}
     </div>
 
   </main>

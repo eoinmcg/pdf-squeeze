@@ -48,7 +48,6 @@ async function sharePdf() {
 
 <template>
   <main class="container">
-    <Header />
     <h3>SHARE</h3>
 
     <Loading v-if="isLoading" />

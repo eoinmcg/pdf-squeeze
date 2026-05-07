@@ -1,6 +1,5 @@
 <template>
   <main class="container">
-    <Header />
     <p class="lead"> Edit PDFs instantly - right on your device. </p>
     <p>
       Merge, compress, delete pages, and add annotations in seconds.

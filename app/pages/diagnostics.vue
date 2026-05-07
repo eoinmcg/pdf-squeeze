@@ -131,17 +131,17 @@ mark {
 }
 
 button {
-  border: 1px solid crimson;
+  border: 2px solid crimson;
   background: orangered;
 }
 
 button.debug.active {
-  border: 1px solid black;
+  border: 2px solid black;
   background: crimson;
 }
 
 button.debug {
-  border: 1px solid white;
+  border: 2px solid #dde;
   background: lightblue;
 }
 </style>

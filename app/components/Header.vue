@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { toggleDebug, isDebug } = useDebug()
+const { locale, locales } = useI18n()
 const { toast } = useToast()
 
 const router = useRouter()
@@ -39,26 +40,39 @@ const handleLogoTap = () => {
     <NuxtLink to="/" @click.prevent="handleLogoTap">
       <div class="logo"> 📑 PDFd</div>
     </NuxtLink>
-    <NuxtLink to="/about">
-      <Icon name="fa7-solid:circle-question" class="icon" />
-    </NuxtLink>
-    <NuxtLink to="/about">
-      <div class="local-only">100% Private</div>
-    </NuxtLink>
+    <nav>
+      <NuxtLink to="/about">
+        <div class="local-only">100% {{ $t('private') }}</div>
+      </NuxtLink>
+      <NuxtLink to="/help">
+        <Icon name="fa7-solid:circle-question" class="icon" />
+      </NuxtLink>
+      <select v-model="locale" class="hidden">
+        <option v-for="lang in locales" :key="lang.code" :value="lang.code">
+          {{ lang.code }}
+        </option>
+      </select>
+    </nav>
   </header>
 </template>
 
 <style scoped>
 header {
+  display: block;
+  padding: .5rem 1rem;
+  margin: 0 auto 1rem auto;
+  max-width: 800px;
   border-bottom: 1px solid rgba(255, 255, 255, .4);
-  padding: .4rem 0;
-  margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
 }
 
 header a {
   text-decoration: none;
+}
+
+nav {
+  gap: .5rem;
 }
 
 .local-only {

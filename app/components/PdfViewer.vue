@@ -106,10 +106,10 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       <button :disabled="currentPage >= totalPages" @click="next">›</button>
     </div>
     <div class="page-nav">
-      <button @click="handleDelete">Delete page</button>
-      <button @click="navigateTo(`/merge/${props.id}`)">Merge</button>
-      <button @click="navigateTo(`/compress/${props.id}`)">Compress</button>
-      <button @click="navigateTo(`/share/${props.id}`)">Share</button>
+      <button @click="handleDelete">{{ $t('delete_page') }}</button>
+      <button @click="navigateTo(`/merge/${props.id}`)">{{ $t('merge') }}</button>
+      <button @click="navigateTo(`/compress/${props.id}`)">{{ $t('compress') }}</button>
+      <button @click="navigateTo(`/share/${props.id}`)">{{ $t('share') }}</button>
     </div>
 
   </div>

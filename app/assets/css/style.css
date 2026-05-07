@@ -81,6 +81,8 @@
    Global Styles
    ------------------------------------------------------- */
 
+.hidden { display: none;}
+
 html, body {
   font-family: var(--font-sans);
   color: var(--color-text);
@@ -170,6 +172,11 @@ button:hover,
   gap: 1rem;
 }
 
+button:focus {
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1)
+}
+
+
 /* -------------------------------------------------------
    Submit (Primary)
    ------------------------------------------------------- */
@@ -257,7 +264,7 @@ button.delete:hover {
 main.container {
   display: block;
   max-width: 800px;
-  padding: 2rem;
+  padding: 0 1rem;
   margin: 0 auto 2rem auto;
   min-height: 80vh;
 }

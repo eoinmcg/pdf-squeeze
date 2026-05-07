@@ -1,5 +1,5 @@
 <template>
   <div class="loading" aria-busy="true">
-    Loading
+    {{ $t('loading') }}
   </div>
 </template>

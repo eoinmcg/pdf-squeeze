@@ -28,7 +28,17 @@ export default defineNuxtConfig({
   devServer: {
     port: 8009,
   },
-  modules: ['@nuxt/icon'],
+  modules: ['@nuxt/icon', '@nuxtjs/i18n'],
+  i18n: {
+    strategy: 'no_prefix', // Keeps URLs the same, or use 'prefix_except_default'
+    defaultLocale: 'en',
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'es', name: 'Español', file: 'es.json' }
+    ],
+    lazy: true,
+    langDir: 'locales/'
+  },
   vite: {
     define: {
       __GIT_HASH__: JSON.stringify(gitHash),

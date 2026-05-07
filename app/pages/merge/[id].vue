@@ -42,14 +42,14 @@ const docNames = computed(() =>
 
 <template>
   <main class="container">
-    <Header />
 
     <div v-if="loading">
       <Loading />
     </div>
 
     <div v-else class="docs-list card">
-      <h3>Select files to merge with <strong>{{ sourceDoc.name }}</strong></h3>
+      <h3>Merge</h3>
+      <p>Select files to merge with:<br /> <strong>{{ sourceDoc.name }}</strong></p>
       <div v-if="filteredDocs.length" v-for="doc in filteredDocs" :key="doc.id">
         <input :id="doc.id" type="checkbox" :value="doc.id"
           :disabled="selected.length >= 2 && !selected.includes(doc.id)" v-model="selected">
@@ -129,5 +129,9 @@ label {
   margin: .75rem 0;
   border: 1px solid #fff;
   border-radius: 15px;
+}
+
+.reorder li .iconify {
+  opacity: .2;
 }
 </style>

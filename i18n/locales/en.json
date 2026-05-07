@@ -1,0 +1,23 @@
+{
+  "welcome": "Welcome to PDF Editor",
+  "private": "private",
+  "loading": "Loading",
+  "your_files": "Your Files",
+  "dropbox_drag": "Drag PDF here or click to upload",
+  "delete": "Delete",
+  "delete_page": "Delete page",
+  "rename": "Rename",
+  "compress": "Compress",
+  "merge": "Merge",
+  "share": "Share",
+  "file_added": "File added",
+  "file_deleted": "File deleted",
+  "file_renamed": "File renamed",
+  "save_file": "Save to Device",
+  "cannot_load_file": "Cannot load file",
+  "are_you_sure": "Are you sure?",
+  "diagnostics": {
+    "title": "System Diagnostics",
+    "secure": "Secure Context"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "welcome": "Welcome to PDF Editor",
+  "private": "private",
+  "dropbox_drag": "Draga PDF aqui or click to upload",
+  "save_file": "Save to Device",
+  "diagnostics": {
+    "title": "System Diagnostics",
+    "secure": "Secure Context"
+  }
+}
+

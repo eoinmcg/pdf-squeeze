@@ -69,7 +69,6 @@ async function savePdf() {
 
 <template>
   <main class="container">
-    <Header />
     <span v-if="fileMeta">
       <FileMeta :data="fileMeta" <hr />
       <p>

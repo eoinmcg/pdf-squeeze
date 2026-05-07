@@ -1,5 +1,6 @@
 <script setup lang="ts">
 
+const { isDebug } = useDebug()
 const { saveFile, getAllMeta, deleteFile } = useFileStorage()
 const { toast } = useToast()
 
@@ -24,9 +25,9 @@ async function handleFile(file: File) {
     docs.value = await getAllMeta()
     toast('FILE ADDED', 'info')
   } catch (err) {
-    console.error('Failed to save file', err)
-    toast('FAILED TO SAVE FILE', 'error')
-    alert(err)
+
+    const append = isDebug.value ? ': ' + err : '';
+    toast('FAILED TO SAVE FILE' + append, 'error')
   }
 }
 
@@ -48,7 +49,6 @@ onMounted(async () => {
 
 <template>
   <main class="container">
-    <Header />
 
     <DropBox @files="handleFiles" />
     <DocList :docs="docs" @deleteDoc="handleDelete" />

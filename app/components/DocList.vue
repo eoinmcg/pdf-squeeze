@@ -17,7 +17,7 @@ function handleDelete(doc: Partial<DocMeta>) {
 
 <template>
   <div class="docs-list card" v-if="docs.length">
-    <h3>Your Files</h3>
+    <h3>{{ $t('your_files') }}</h3>
     <!-- <input type="search" name="search" placeholder="Search" aria-label="Search" /> -->
     <TransitionGroup name="list" tag="div" class="doc-container">
 
@@ -35,7 +35,7 @@ function handleDelete(doc: Partial<DocMeta>) {
               {{ doc.name }}
             </NuxtLink>
             <small>
-              Added: {{ formatDate(doc.createdAt) }} •
+              <Icon name="fa7-solid:calendar-alt" /> {{ formatDate(doc.createdAt) }} •
               {{ formatBytes(doc.size) }}
             </small>
           </div>
@@ -47,16 +47,22 @@ function handleDelete(doc: Partial<DocMeta>) {
               </summary>
               <ul role="listbox">
                 <li>
-                  <NuxtLink :to="`/editor/${doc.id}`">Edit</NuxtLink>
+                  <NuxtLink :to="`/compress/${doc.id}`">
+                    <Icon name="fa7-solid:compress-arrows-alt" />
+                    Compress
+                  </NuxtLink>
                 </li>
                 <li>
-                  <NuxtLink :to="`/compress/${doc.id}`">Compress</NuxtLink>
+                  <NuxtLink :to="`/share/${doc.id}`">
+                    <Icon name="fa7-solid:share-alt" />
+                    Share
+                  </NuxtLink>
                 </li>
                 <li>
-                  <NuxtLink :to="`/share/${doc.id}`">Share</NuxtLink>
-                </li>
-                <li>
-                  <NuxtLink :to="`/download/${doc.id}`">Download</NuxtLink>
+                  <NuxtLink :to="`/download/${doc.id}`">
+                    <Icon name="fa7-solid:download" />
+                    Download
+                  </NuxtLink>
                 </li>
               </ul>
             </details>
@@ -143,10 +149,27 @@ function handleDelete(doc: Partial<DocMeta>) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 70%;
+  opacity: .5;
 }
 
 ul li {
   list-style: none;
+}
+
+li:first-child {
+  margin-top: 2rem;
+}
+
+li a {
+  display: block;
+  color: #fff;
+  font-size: 80%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
+  ;
 }
 
 .action-right {
