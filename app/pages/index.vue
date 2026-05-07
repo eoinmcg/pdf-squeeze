@@ -26,6 +26,7 @@ async function handleFile(file: File) {
   } catch (err) {
     console.error('Failed to save file', err)
     toast('FAILED TO SAVE FILE', 'error')
+    alert(err)
   }
 }
 
