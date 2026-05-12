@@ -27,5 +27,9 @@
     "vite": "^6.4.2",
     "vue": "latest",
     "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vueuse/core": "^14.3.0",
+    "@vueuse/nuxt": "^14.3.0"
   }
 }

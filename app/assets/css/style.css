@@ -5,6 +5,10 @@
    ------------------------------------------------------- */
 
 :root {
+
+  /* container width (can also be applied to header) */
+  --max-width: 800px;
+
   /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont,
                "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -34,7 +38,7 @@
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.20);
 
   /* Transitions */
   --transition-fast: 120ms ease;
@@ -75,6 +79,44 @@
   --btn-font-weight: 500;
   --btn-transition: var(--transition);
 
+}
+
+/* -------------------------------------------------------
+   Fullscreen shenanigans
+   ------------------------------------------------------- */
+::backdrop {
+  background-color: #4ade80; /* Base vibrant green */
+  background-image: 
+    /* Soft Blue Glow bottom left */
+    radial-gradient(at 0% 100%, hsla(190, 80%, 70%, 0.5) 0px, transparent 50%), 
+    /* Yellowish Highlight top left */
+    radial-gradient(at 15% 15%, hsla(65, 85%, 75%, 0.4) 0px, transparent 45%),
+    /* Deeper Green shadow/glow right side */
+    radial-gradient(at 90% 40%, hsla(145, 70%, 40%, 0.3) 0px, transparent 50%),
+    /* Soft Cyan middle bottom */
+    radial-gradient(at 50% 95%, hsla(170, 75%, 80%, 0.4) 0px, transparent 40%);
+  
+  /* Adds a slight grain if you want that textured look in the image */
+  background-blend-mode: normal;
+}
+
+/* Fallback for older browsers or specific element styling */
+:fullscreen, :-webkit-full-screen, :-moz-full-screen {
+  background-color: #4ade80; /* Base vibrant green */
+  background-image: 
+    /* Soft Blue Glow bottom left */
+    radial-gradient(at 0% 100%, hsla(190, 80%, 70%, 0.5) 0px, transparent 50%), 
+    /* Yellowish Highlight top left */
+    radial-gradient(at 15% 15%, hsla(65, 85%, 75%, 0.4) 0px, transparent 45%),
+    /* Deeper Green shadow/glow right side */
+    radial-gradient(at 90% 40%, hsla(145, 70%, 40%, 0.3) 0px, transparent 50%),
+    /* Soft Cyan middle bottom */
+    radial-gradient(at 50% 95%, hsla(170, 75%, 80%, 0.4) 0px, transparent 40%);
+  
+  /* Adds a slight grain if you want that textured look in the image */
+  background-blend-mode: normal;
+    width: 100%;
+    height: 100%;
 }
 
 /* -------------------------------------------------------
@@ -263,7 +305,7 @@ button.delete:hover {
 
 main.container {
   display: block;
-  max-width: 800px;
+  max-width: var(--max-width);
   padding: 0 1rem;
   margin: 0 auto 2rem auto;
   min-height: 80vh;

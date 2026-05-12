@@ -28,7 +28,7 @@ export default defineNuxtConfig({
   devServer: {
     port: 8009,
   },
-  modules: ['@nuxt/icon', '@nuxtjs/i18n'],
+  modules: ['@nuxt/icon', '@nuxtjs/i18n', '@vueuse/nuxt'],
   i18n: {
     strategy: 'no_prefix', // Keeps URLs the same, or use 'prefix_except_default'
     defaultLocale: 'en',

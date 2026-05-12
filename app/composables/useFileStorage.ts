@@ -2,7 +2,7 @@ import { PDFDocument } from 'pdf-lib'
 import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
 
 const DB_NAME = 'pdf-editor'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 const getDb = () =>
   openDB(DB_NAME, DB_VERSION, {
@@ -90,7 +90,8 @@ export const useFileStorage = () => {
 
   const getAllMeta = async () => {
     const db = await getDb()
-    return db.getAll('documents') as Promise<DocMeta[]>
+    const files = await db.getAll('documents') as Promise<DocMeta[]>
+    return files.reverse()
   }
 
   const deleteFile = async (id: string) => {
