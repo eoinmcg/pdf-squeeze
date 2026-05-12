@@ -19,7 +19,8 @@ const emit = defineEmits(['page-change', 'ready', 'delete-page'])
 
 const canvasWrapRef = ref(null)
 const canvasRef = ref(null)
-const dropdownContainer = ref(null)
+const slideOutMenuRef = ref(null)
+const slideOutMenuOpen = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(0)
 const showOptions = ref(false)
@@ -131,14 +132,19 @@ const handleJumpTo = async () => {
 
 }
 
+const handleAnnotate = async () => {
+  console.log('ANNOT8')
+  slideOutMenuOpen.value = !slideOutMenuOpen.value
+}
+
 const toggleOptions = async () => {
   showOptions.value = !showOptions.value
 }
 
 const closeOptions = (e) => {
-  // Check if the click target is NOT inside the dropdown wrapper
-  if (dropdownContainer.value && !dropdownContainer.value.contains(e.target)) {
-    showOptions.value = false
+  // Check if the click target is NOT inside the slidemenu
+  if (slideOutMenuOpen.value && !slideOutMenuRef.value.contains(e.target)) {
+    // slideOutMenuOpen.value = false
   }
 }
 
@@ -148,6 +154,49 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
 
 <template>
   <div class="pdf-viewer" ref="canvasWrapRef">
+
+    <div ref="slideOutMenuRef" class="slideout-menu" :class="slideOutMenuOpen ? 'active' : ''">
+      <button class="close" @click="slideOutMenuOpen = false">
+        <Icon name="mdi:close-circle" />
+      </button>
+      <nav class="primary">
+        <button @click="isFullscreen = !isFullscreen">
+          <Icon :name="isFullscreen ? 'mdi:fullscreen-exit' : 'mdi:fullscreen'" />
+          {{ $t('fullscreen') }}
+        </button>
+
+        <button @click="handleAnnotate">
+          <Icon name="mdi:sticker" />
+          {{ $t('sticky_note') }}
+        </button>
+
+        <button @click="handleAnnotate">
+          <Icon name="mdi:signature-freehand" />
+          {{ $t('signature') }}
+        </button>
+
+        <button @click="handleDelete">
+          <Icon name="mdi:delete" />
+          {{ $t('delete_page') }}
+        </button>
+
+      </nav>
+
+      <nav>
+        <button @click="navigateTo(`/merge/${props.id}`)">
+          <!-- <Icon name="mdi:table-merge-cells" /> -->
+          {{ $t('merge') }}
+        </button>
+        <button @click="navigateTo(`/compress/${props.id}`)">
+          <!-- <Icon name="mdi:zip-box-outline" /> -->
+          {{ $t('compress') }}
+        </button>
+        <button class="danger" @click="navigateTo(`/`)">
+          <!-- <Icon name="mdi:exit-run" /> -->
+          {{ $t('exit_to_menu') }}
+        </button>
+      </nav>
+    </div>
 
     <div class="page-nav primary">
       <div class="nav-group">
@@ -165,34 +214,13 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       <div class="spacer"></div>
 
       <div class="action-group">
-        <button class="action-btn" @click="handleAnnotate">
-          <Icon name="ic:baseline-edit" />
-          <span class="btn-label">{{ $t('annotate') }}</span>
-        </button>
-
-        <button class="action-btn delete-page" @click="handleDelete">
-          <Icon name="ic:baseline-delete-forever" />
-          <span class="btn-label">{{ $t('delete_page') }}</span>
-        </button>
-
-        <div class="dropdown-wrapper" ref="dropdownContainer">
-          <button class="action-btn" @click="toggleOptions">
-            <Icon name="ic:baseline-format-list-bulleted" />
-            <span class="btn-label">{{ $t('options') }}</span>
-          </button>
-          <transition name="fade-slide">
-            <div v-if="showOptions" class="dropdown-menu">
-              <div class="dropdown-item" @click="navigateTo(`/merge/${props.id}`)">{{ $t('merge') }}</div>
-              <div class="dropdown-item" @click="navigateTo(`/compress/${props.id}`)">{{ $t('compress') }}</div>
-              <div class="dropdown-item" @click="navigateTo(`/share/${props.id}`)">{{ $t('share') }}</div>
-              <hr />
-              <div class="dropdown-item danger" @click="navigateTo(`/`)">{{ $t('exit_to_menu') }}</div>
-            </div>
-          </transition>
-        </div>
-
         <button class="action-btn" @click="handleFullScreen">
           <Icon :name="isFullscreen ? 'ic:outline-fullscreen-exit' : 'ic:outline-fullscreen'" />
+        </button>
+
+        <button class="action-btn" @click="handleAnnotate">
+          <Icon name="ic:baseline-format-list-bulleted" />
+          <span class="btn-label">{{ $t('options') }}</span>
         </button>
       </div>
     </div>
@@ -207,12 +235,14 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
 
 <style scoped>
 .pdf-viewer {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   height: 100%;
   box-shadow: var(--shadow-lg);
+  overflow: hidden;
 }
 
 .canvas-wrap {
@@ -246,7 +276,71 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   opacity: 0.7;
 }
 
-/* Base Styles (Desktop) */
+.slideout-menu {
+  position: absolute;
+  /* left: -300px; */
+  display: block;
+  right: -200px;
+  width: 0;
+  top: 0;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1;
+  transition: all .2s linear;
+}
+
+.slideout-menu.active {
+  width: 200px;
+  right: 0;
+}
+
+.slideout-menu button.close {
+  border: none;
+  background: transparent;
+  text-align: right;
+  width: 100%;
+  display: block;
+  text-indent: -9999px;
+  font-size: 150%;
+}
+
+.slideout-menu button.close:hover {
+  background: transparent;
+  color: crimson;
+}
+
+.slideout-menu button:hover {
+  transform: translateY(0);
+}
+
+.slideout-menu nav {
+  margin-top: 2rem;
+  display: block;
+  font-size: 120%;
+}
+
+.slideout-menu nav.primary button {
+  font-size: 80%;
+}
+
+
+.slideout-menu nav button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: .5rem 1rem;
+}
+
+.slideout-menu nav button:hover {
+  background-color: darkorange;
+  border-bottom: 1px solid #000;
+  color: #222;
+}
+
+
 .page-nav.primary {
   display: flex;
   align-items: center;
@@ -258,6 +352,7 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   /* Ensures padding doesn't break 100% width */
 }
 
+/* Base Styles (Desktop) */
 .nav-group,
 .action-group {
   display: flex;
@@ -328,38 +423,6 @@ button:disabled {
   color: #ff8888;
 }
 
-/* Dropdown Logic */
-.dropdown-wrapper {
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: #252525;
-  border: 1px solid #444;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  min-width: 160px;
-  z-index: 100;
-  overflow: hidden;
-  padding: 4px;
-}
-
-.dropdown-item {
-  padding: 10px 12px;
-  font-size: 13px;
-  color: #ddd;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.dropdown-item:hover {
-  background: #3b82f6;
-  /* Modern Blue */
-  color: white;
-}
 
 hr {
   border: 0;
