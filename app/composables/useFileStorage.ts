@@ -2,13 +2,15 @@ import { PDFDocument } from 'pdf-lib'
 import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
 
 const DB_NAME = 'pdf-editor'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 const getDb = () =>
   openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
-      const store = db.createObjectStore('documents', { keyPath: 'id' })
-      store.createIndex('contentHash', 'contentHash', { unique: false })
+      if (!db.objectStoreNames.contains('documents')) {
+        const store = db.createObjectStore('documents', { keyPath: 'id' });
+        store.createIndex('contentHash', 'contentHash', { unique: false });
+      }
     }
   })
 

@@ -27,6 +27,8 @@ export default defineNuxtConfig({
   },
   devServer: {
     port: 8009,
+    // https: true,
+    // host: '0.0.0.0',
   },
   modules: ['@nuxt/icon', '@nuxtjs/i18n', '@vueuse/nuxt'],
   i18n: {

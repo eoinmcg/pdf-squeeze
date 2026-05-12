@@ -5,6 +5,9 @@ interface DocMeta {
   size: number
   contentHash: string
   pageCount: number
+  tags: string
+  starred: boolean
+  annotations: any[]  //@todo define Annotation interface
   annotationCount: number
   lastOpenedAt: number
   createdAt: number

@@ -15,6 +15,10 @@ const version = __APP_VERSION__
       &copy {{ new Date().getFullYear() }}
       |
       made by <a href="https://eoinmcgrath.com">eoinmcg</a>
+      <span v-if="isDev">
+        |
+        <NuxtLink to="/diagnostics">diagnostics</NuxtLink>
+      </span>
     </p>
     <p>
       <small v-if="isDev">dev mode: {{ version }}</small>

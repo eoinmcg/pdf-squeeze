@@ -27,7 +27,7 @@ async function handleFile(file: File) {
   } catch (err) {
 
     const append = isDebug.value ? ': ' + err : '';
-    toast('FAILED TO SAVE FILE' + append, 'error')
+    toast('FAILED TO SAVE FILE' + append, 'error', isDebug.value ? 20000 : 3000)
   }
 }
 
