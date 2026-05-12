@@ -116,21 +116,17 @@ const handleDelete = async () => {
 
 const handleFullScreen = async () => {
   const div = canvasWrapRef.value;
-  if (!document.fullscreenElement) {
-    div.requestFullscreen().catch(err => {
-      console.log(`Error attempting to enable fullscreen: ${err.message}`);
-    });
-  } else {
-    document.exitFullscreen();
-  } if (!document.fullscreenElement) {
-    div.requestFullscreen().catch(err => {
-      console.log(`Error attempting to enable fullscreen: ${err.message}`);
-    });
-  } else {
-    document.exitFullscreen();
+
+  try {
+    if (!document.fullscreenElement) {
+      await div.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch (err) {
+    console.error(`Fullscreen error: ${err.message}`);
   }
 }
-
 const handleJumpTo = async () => {
 
 }
