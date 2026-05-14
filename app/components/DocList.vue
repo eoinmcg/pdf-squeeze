@@ -32,7 +32,7 @@ function goToDoc(id) {
             <UiDeleteButton @click="handleDelete(doc)" />
           </div>
 
-          <div class="thumbnail">
+          <div class="thumbnail" @click="goToDoc(doc.id)">
             <img :src="doc.thumbnail" width="120" />
           </div>
 
@@ -92,6 +92,10 @@ function goToDoc(id) {
 
 .doc {
   transition: all .2s ease-in;
+}
+
+.doc .thumbnail,
+.doc .content-main {
   cursor: pointer;
 }
 
@@ -138,8 +142,7 @@ function goToDoc(id) {
 
 .list-item-row {
   display: flex;
-  align-items: center;
-  /* Vertical centering */
+  align-items: top;
   gap: 1rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);

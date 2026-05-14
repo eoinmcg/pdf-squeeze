@@ -75,7 +75,7 @@ const handleToggleDebug = () => {
           <tr>
             <td><strong>Secure Context (HTTPS)</strong></td>
             <td>
-              <mark :style="{ backgroundColor: stats.secure ? '#2ecc71' : '#e74c3c', color: 'white' }">
+              <mark :style="{ backgroundColor: stats.secure ? 'darkgreen' : 'crimson', color: 'white' }">
                 {{ stats.secure ? 'YES' : 'NO' }}
               </mark>
             </td>
@@ -133,15 +133,18 @@ mark {
 button {
   border: 2px solid crimson;
   background: orangered;
+  color: #fff;
 }
 
 button.debug.active {
   border: 2px solid black;
   background: crimson;
+  color: #fff;
 }
 
 button.debug {
   border: 2px solid #dde;
   background: lightblue;
+  color: black;
 }
 </style>

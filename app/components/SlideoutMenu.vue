@@ -92,7 +92,6 @@ onUnmounted(() => {
 <style scoped>
 .slideout-menu {
   position: absolute;
-  /* left: -300px; */
   display: block;
   right: -200px;
   width: 0;
@@ -117,10 +116,11 @@ onUnmounted(() => {
   display: block;
   margin-left: auto;
   font-size: 150%;
+  transition: all var(--transition-slow);
 }
 
 .slideout-menu button.close:hover {
-  background: transparent;
+  transform: rotate(180deg);
   color: crimson;
 }
 
@@ -154,8 +154,8 @@ onUnmounted(() => {
 }
 
 .slideout-menu nav button:hover {
-  background-color: darkorange;
+  background-color: darkgreen;
   border-bottom: 1px solid #000;
-  color: #222;
+  color: #fff;
 }
 </style>

@@ -23,10 +23,7 @@ watch(
 </script>
 
 <template>
-  <div
-    v-if="message"
-    :class="['toast', type]"
-  >
+  <div v-if="message" :class="['toast', type]">
     {{ message }}
   </div>
 </template>
@@ -35,7 +32,7 @@ watch(
 .toast {
   color: white;
   padding: 12px 24px;
-  border-radius: 8px;
+  /* border-radius: 8px; */
   border: 2px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin: 5px 0;
@@ -48,8 +45,8 @@ watch(
 }
 
 .toast.success {
-  background: greenyellow;
-  color: #222;
+  background: darkgreen;
+  color: #fff;
 }
 
 .toast.info {

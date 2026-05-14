@@ -22,6 +22,7 @@ const { isVisible, options, confirm, cancel, dialogRef } = useConfirm()
 
 <template>
   <div class="app-shell">
+
     <Header />
     <slot />
 

@@ -14,7 +14,8 @@ onMounted(async () => {
     <div class="page-wrapper">
       <NuxtPage :page-key="route => route.fullPath" />
     </div>
-    <div class="aurora-background"></div>
+
+    <GrainCanvas style="position: fixed; inset: 0; z-index: -1;" />
   </NuxtLayout>
 </template>
 

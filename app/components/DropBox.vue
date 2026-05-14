@@ -45,7 +45,7 @@ function onFileSelected(e: Event) {
   text-align: center;
   transition: all 0.2s;
   background: linear-gradient(rgba(255, 255, 255, .8), rgba(255, 255, 255, .9));
-  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.1);
 }
 
 .dropbox::before {
@@ -75,11 +75,16 @@ function onFileSelected(e: Event) {
   border-color: darkgreen;
 }
 
+.dropbox:hover p {
+  color: #333;
+}
+
 .dropbox p {
   display: block;
   margin: 0 auto;
   width: 50%;
   text-align: center;
+  color: #999;
 }
 
 .dropbox.is-dragover {

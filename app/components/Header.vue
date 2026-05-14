@@ -31,7 +31,7 @@ const handleLogoTap = () => {
 
     toggleDebug()
 
-    toast('DEBUG MODE: ' + isDebug.value, 'info')
+    toast('DEBUG MODE: ' + (isDebug.value ? 'on' : 'off'), 'info')
 
     if (navigator.vibrate) navigator.vibrate([50, 30, 50])
     // alert('🛠️ Debug Mode Toggled') // Optional feedback
@@ -55,7 +55,7 @@ const handleLogoTap = () => {
         <div class="local-only">100% {{ $t('private') }}</div>
       </NuxtLink>
       <NuxtLink to="/about">
-        <Icon name="fa7-solid:circle-info" />
+        <Icon class="icon" name="fa7-solid:circle-info" />
       </NuxtLink>
       <select v-model="locale" class="hidden">
         <option v-for="lang in locales" :key="lang.code" :value="lang.code">
@@ -72,7 +72,7 @@ header {
   padding: .5rem 1rem;
   margin: 0 auto 1rem auto;
   max-width: 800px;
-  border-bottom: 1px solid rgba(255, 255, 255, .4);
+  border-bottom: 1px solid rgba(0, 0, 0, .1);
   display: flex;
   justify-content: space-between;
 }
@@ -89,40 +89,55 @@ nav {
   font-size: 70%;
   font-weight: thin;
   padding: .75rem 1rem;
-  background: darkgreen;
-  color: #fff;
-  border: 3px solid rgba(0, 0, 0, 0.3);
+  background: rgba(145, 56, 49, 0.1);
+  border: 3px solid rgba(145, 56, 49, 0.2);
+  color: rgba(145, 56, 49, .9);
   line-height: .1;
   height: 1.5rem;
+  font-weight: bold;
   border-radius: var(--radius-lg);
+}
+
+.icon {
+  color: rgba(145, 56, 49, .9);
+}
+
+.icon:hover {
+  color: rgba(145, 56, 49, 1);
 }
 
 
 .logo {
   display: flex;
-  gap: 10px;
+  gap: 1px;
   transition: all .3s ease-in-out;
   align-items: center;
 }
 
 .logo-image {
-
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   background-color: #444;
   mask: url('/logo.svg') no-repeat center / contain;
   -webkit-mask: url('/logo.svg') no-repeat center / contain;
   transition: background-color .2s;
+  background-color: #666;
 }
 
 .logo:hover .logo-image {
   background-color: darkgreen;
 }
 
+.logo:hover .logo-text {
+  color: darkgreen;
+}
+
 .logo-text {
   display: flex;
-  /* flex-direction: column; */
   line-height: 1.1;
+  color: #666;
+  font-family: var(--font-serif);
+  font-size: 120%;
 }
 
 .logo-text strong {
