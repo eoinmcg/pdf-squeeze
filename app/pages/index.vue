@@ -8,9 +8,12 @@ const { toast } = useToast()
 const { ask } = useConfirm()
 
 const docs = ref([]);
+const uploading = ref(false)
 
 async function handleFiles(files: File[]) {
+  uploading.value = true
   await Promise.all(files.map(file => handleFile(file)))
+  uploading.value = false
 }
 
 async function handleFile(file: File) {
@@ -26,7 +29,7 @@ async function handleFile(file: File) {
       return toast('File exists')
     }
     docs.value = await getAllMeta()
-    toast('FILE ADDED', 'info')
+    toast(t('file_added'), 'info')
   } catch (err) {
 
     const append = isDebug.value ? ': ' + err : '';
@@ -48,7 +51,7 @@ const handleDelete = async (file: DocumentMeta) => {
 
 
   docs.value = await getAllMeta();
-  toast('FILE DELETED', 'info')
+  toast(t('file_deleted'), 'info')
 }
 
 onMounted(async () => {
@@ -61,7 +64,7 @@ onMounted(async () => {
   <main class="container">
 
     <DropBox @files="handleFiles" />
-    <DocList :docs="docs" @deleteDoc="handleDelete" />
+    <DocList :docs="docs" :uploading="uploading" @deleteDoc="handleDelete" />
 
   </main>
 </template>

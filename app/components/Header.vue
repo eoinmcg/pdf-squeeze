@@ -136,8 +136,8 @@ nav {
   display: flex;
   line-height: 1.1;
   color: #666;
-  font-family: var(--font-serif);
-  font-size: 120%;
+  font-size: 125%;
+  font-weight: 100;
 }
 
 .logo-text strong {

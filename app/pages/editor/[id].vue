@@ -1,8 +1,6 @@
 <script setup lang="ts">
 
-import * as pdfjsLib from "pdfjs-dist";
-import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+const { t } = useI18n()
 
 const { loadFile, updateMeta, getMeta, deletePage } = useFileStorage()
 const route = useRoute()
@@ -69,7 +67,7 @@ const handlePageDelete = async (payload) => {
 
 const saveMetadata = async () => {
   await updateMeta(ID, { name: fileMetaData.value.name })
-  toast('RENAMED')
+  toast(t('file_renamed'))
 }
 </script>
 

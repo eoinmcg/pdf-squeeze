@@ -50,8 +50,8 @@ watch(
 }
 
 .toast.info {
-  background: lightblue;
-  color: #222;
+  background: darkblue;
+  color: #fff;
 }
 
 .toast.error {

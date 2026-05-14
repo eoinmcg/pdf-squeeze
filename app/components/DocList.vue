@@ -2,12 +2,30 @@
 
 const { deleteFile } = useFileStorage()
 const { toast } = useToast()
+const { t } = useI18n();
+
+const isExpanded = ref(false)
+const searchQuery = ref('')
+const searchInput = ref(null)
 
 const props = defineProps({
-  docs: Array
+  docs: Array,
+  uploading: Boolean,
 })
 
 const emit = defineEmits(['deleteDoc'])
+
+const filteredDocs = computed(() => {
+  if (!searchQuery.value) {
+    return props.docs
+  }
+
+  const query = searchQuery.value.toLowerCase()
+
+  return props.docs.filter((doc) => {
+    return doc.name.toLowerCase().includes(query)
+  })
+})
 
 function handleDelete(doc: Partial<DocMeta>) {
   emit('deleteDoc', doc)
@@ -17,15 +35,36 @@ function goToDoc(id) {
   navigateTo(`/editor/${id}`)
 }
 
+const expand = () => {
+  isExpanded.value = true
+  nextTick(() => searchInput.value?.focus())
+}
+
+const collapse = () => {
+  // If there is text in the search, you might want to stay expanded.
+  // Otherwise, collapse and clear the search.
+  if (searchQuery.value === '') {
+    isExpanded.value = false
+  }
+}
 </script>
 
 <template>
+
+  <Loading v-if="props.uploading" />
+
   <div class="docs-list card" v-if="docs.length">
-    <h3>{{ $t('your_files') }}</h3>
-    <!-- <input type="search" name="search" placeholder="Search" aria-label="Search" /> -->
+    <div class="header-row">
+      <h3 v-show="!isExpanded">{{ $t('your_files') }}</h3>
+      <div class="search-container" :class="{ 'is-expanded': isExpanded }">
+        <input ref="searchInput" v-model="searchQuery" type="search" name="search" :placeholder="t('search')"
+          aria-label="Search" @focus="expand" @blur="collapse" />
+      </div>
+    </div>
+
     <TransitionGroup name="list" tag="div" class="doc-container">
 
-      <div v-for="doc in docs" class="doc" :key="doc.id">
+      <div v-for="doc in filteredDocs" class="doc" :key="doc.id">
         <div class="list-item-row">
           <!-- 1. Delete Button -->
           <div class="action-left">
@@ -88,6 +127,10 @@ function goToDoc(id) {
 .doc-container {
   position: relative;
   overflow: hidden;
+}
+
+.docs-list {
+  transition: all var(--transition-fast);
 }
 
 .doc {
@@ -212,5 +255,62 @@ li a {
 /* Pico Dropdown specific tweak: prevent margin bottom inside list */
 .action-right details {
   margin-bottom: 0;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  margin-bottom: 1rem;
+  height: 3.5rem;
+  overflow: hidden;
+}
+
+h3 {
+  white-space: nowrap;
+  margin: 0;
+  padding-right: 1rem;
+  transition: opacity 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.search-container {
+  width: 3.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: auto;
+}
+
+.search-container.is-expanded {
+  width: 100%;
+  margin-left: 0;
+}
+
+input[type="search"] {
+  margin-bottom: 0;
+  /* Remove Pico's default bottom margin */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-color: transparent;
+  background-color: transparent;
+}
+
+/* Ensure the input fills the container */
+.search-container.is-expanded input {
+  cursor: text;
+  background-color: #fff;
+  outline: none;
+  box-shadow: none;
+  width: 100%;
+}
+
+
+/* hide the 'X' or text until expanded */
+.search-container:not(.is-expanded) input {
+  color: transparent;
+}
+
+.search-container:not(.is-expanded) input::placeholder {
+  color: transparent;
 }
 </style>
