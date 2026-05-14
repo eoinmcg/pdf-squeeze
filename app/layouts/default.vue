@@ -10,7 +10,7 @@ useHead({
   bodyAttrs: {
     class: "layout-main",
   },
-  link: [{ rel: "icon", type: "image/png", href: favicon }],
+  link: [{ rel: "icon", type: "image/svg", href: "/logo.svg" }],
 })
 
 const { toasts, closeToast } = useToast()

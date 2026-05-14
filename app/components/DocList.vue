@@ -13,6 +13,10 @@ function handleDelete(doc: Partial<DocMeta>) {
   emit('deleteDoc', doc)
 }
 
+function goToDoc(id) {
+  navigateTo(`/editor/${id}`)
+}
+
 </script>
 
 <template>
@@ -28,15 +32,21 @@ function handleDelete(doc: Partial<DocMeta>) {
             <UiDeleteButton @click="handleDelete(doc)" />
           </div>
 
+          <div class="thumbnail">
+            <img :src="doc.thumbnail" width="120" />
+          </div>
+
           <!-- 2. Main Content (The "Stretchy" part) -->
-          <div class="content-main">
-            <NuxtLink :to="`/editor/${doc.id}`">
-              <Icon name="fa7-solid:pencil" />
-              {{ doc.name }}
-            </NuxtLink>
+          <div class="content-main" @click="goToDoc(doc.id)" :key="doc.id">
+            <h4>
+              <NuxtLink :to="`/editor/${doc.id}`">
+                {{ doc.name }}
+              </NuxtLink>
+            </h4>
             <small>
-              <Icon name="fa7-solid:calendar-alt" /> {{ formatDate(doc.createdAt) }} •
-              {{ formatBytes(doc.size) }}
+              {{ doc.pageCount }} {{ $t('pages') }} •
+              {{ formatDate(doc.createdAt) }} •
+              {{ formatBytes(doc.size, 0) }}
             </small>
           </div>
 
@@ -59,7 +69,7 @@ function handleDelete(doc: Partial<DocMeta>) {
                   </NuxtLink>
                 </li>
                 <li>
-                  <NuxtLink :to="`/download/${doc.id}`">
+                  <NuxtLink :to="`/share/${doc.id}`">
                     <Icon name="fa7-solid:download" />
                     {{ $t('download') }}
                   </NuxtLink>
@@ -80,6 +90,12 @@ function handleDelete(doc: Partial<DocMeta>) {
   overflow: hidden;
 }
 
+.doc {
+  transition: all .2s ease-in;
+  cursor: pointer;
+}
+
+
 .doc p.info {
   opacity: .4;
   font-size: 90%;
@@ -92,7 +108,8 @@ function handleDelete(doc: Partial<DocMeta>) {
 }
 
 .doc {
-  background-color: transparent;
+  border: .5px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.5);
   /* or your default color */
   overflow: hidden;
   /* Crucial for the collapse effect */
@@ -130,6 +147,7 @@ function handleDelete(doc: Partial<DocMeta>) {
 
 .action-left {
   flex-shrink: 0;
+  padding-left: 1rem;
   /* Don't let button squash */
 }
 
@@ -151,6 +169,17 @@ function handleDelete(doc: Partial<DocMeta>) {
   white-space: nowrap;
   font-size: 70%;
   opacity: .5;
+  font-family: monospace;
+}
+
+.content-main h4 {
+  margin: 0;
+}
+
+.content-main h4 a {
+  font-size: 90%;
+  color: darkgreen;
+  text-decoration: none;
 }
 
 ul li {
@@ -163,12 +192,13 @@ ul {
 
 li a {
   display: block;
-  color: #fff;
+  /* color: #fff; */
   font-size: 70%;
   border: 1px solid rgba(255, 255, 255, 0.5);
   width: 100%;
   padding: 5px;
   border-radius: 5px;
+  text-decoration: none;
   ;
 }
 

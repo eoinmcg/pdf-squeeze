@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import 'assets/css/style.css'
+import './lib/pdfjs'
+
 
 onMounted(async () => {
   await requestPersistence()

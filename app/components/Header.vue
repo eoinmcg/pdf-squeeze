@@ -1,4 +1,7 @@
 <script setup lang="ts">
+
+import Logo from '~/assets/icons/logo.svg';
+
 const { toggleDebug, isDebug } = useDebug()
 const { locale, locales } = useI18n()
 const { toast } = useToast()
@@ -33,19 +36,26 @@ const handleLogoTap = () => {
     if (navigator.vibrate) navigator.vibrate([50, 30, 50])
     // alert('🛠️ Debug Mode Toggled') // Optional feedback
   }
+  console.log(Logo)
 }
 </script>
 <template>
   <header>
     <NuxtLink to="/" @click.prevent="handleLogoTap">
-      <div class="logo"> 📑 PDFd</div>
+      <div class="logo">
+        <div class="logo-image"></div>
+        <div class="logo-text">
+          offgrid
+          <strong>PDF</strong>
+        </div>
+      </div>
     </NuxtLink>
     <nav>
       <NuxtLink to="/about">
         <div class="local-only">100% {{ $t('private') }}</div>
       </NuxtLink>
-      <NuxtLink to="/help">
-        <Icon name="fa7-solid:circle-question" class="icon" />
+      <NuxtLink to="/about">
+        <Icon name="fa7-solid:circle-info" />
       </NuxtLink>
       <select v-model="locale" class="hidden">
         <option v-for="lang in locales" :key="lang.code" :value="lang.code">
@@ -76,11 +86,12 @@ nav {
 }
 
 .local-only {
-  font-size: 80%;
+  font-size: 70%;
   font-weight: thin;
   padding: .75rem 1rem;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  background: darkgreen;
+  color: #fff;
+  border: 3px solid rgba(0, 0, 0, 0.3);
   line-height: .1;
   height: 1.5rem;
   border-radius: var(--radius-lg);
@@ -88,10 +99,34 @@ nav {
 
 
 .logo {
-  font-size: 150%;
-  color: #333;
-  font-weight: bold;
+  display: flex;
+  gap: 10px;
   transition: all .3s ease-in-out;
+  align-items: center;
+}
+
+.logo-image {
+
+  width: 28px;
+  height: 28px;
+  background-color: #444;
+  mask: url('/logo.svg') no-repeat center / contain;
+  -webkit-mask: url('/logo.svg') no-repeat center / contain;
+  transition: background-color .2s;
+}
+
+.logo:hover .logo-image {
+  background-color: darkgreen;
+}
+
+.logo-text {
+  display: flex;
+  /* flex-direction: column; */
+  line-height: 1.1;
+}
+
+.logo-text strong {
+  font-weight: bold;
 }
 
 .logo:hover {

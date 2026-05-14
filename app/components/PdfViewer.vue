@@ -1,8 +1,7 @@
-<script setup>
-import * as pdfjsLib from 'pdfjs-dist'
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url'
+<script setup lang="ts">
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
+import { AnnotationLayer } from 'pdfjs-dist'
+import 'pdfjs-dist/web/pdf_viewer.css'
 
 const props = defineProps({
   pdfDoc: {
@@ -19,7 +18,7 @@ const emit = defineEmits(['page-change', 'ready', 'delete-page'])
 
 const canvasWrapRef = ref(null)
 const canvasRef = ref(null)
-const slideOutMenuRef = ref(null)
+const annotationLayerRef = ref(null)
 const slideOutMenuOpen = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(0)
@@ -57,7 +56,56 @@ const renderPage = async (pageNum) => {
     renderTask = page.render({ canvasContext: ctx, viewport })
     await renderTask.promise
 
+
+    // annotation layer — needs a div overlaid on the canvas
+    annotationLayerRef.value.innerHTML = ''
+    annotationLayerRef.value.style.width = `${canvas.width}px`
+    annotationLayerRef.value.style.height = `${canvas.height}px`
+    const annotations = await page.getAnnotations()
+    const linkService = {
+      getDestinationHash: () => '',
+      getAnchorUrl: () => '',
+      addLinkAttributes: () => { },
+      navigateTo: () => { },
+      goToDestination: () => { },
+      page: pageNum,
+      pagesCount: totalPages.value,
+      externalLinkTarget: null,
+      externalLinkRel: null,
+      externalLinkEnabled: false,
+    }
+
+    const annotationLayer = new AnnotationLayer({
+      viewport: viewport.clone({ dontFlip: true }),
+      div: annotationLayerRef.value,
+      annotations,
+      page,
+      linkService,
+      renderForms: false,
+    })
+
+    await annotationLayer.render({
+      viewport: viewport.clone({ dontFlip: true }),
+      div: annotationLayerRef.value,
+      annotations,
+      page,
+      linkService,
+      renderForms: false,
+    })
+
+    // const filtered = annotations.filter(a => a.subtype !== 'Link')
+    // console.log('non-link annotations:', filtered)
+    //
+    // console.log('raw rect:', annotations[0]?.rect)
+    //
+    // // this is what PDF.js uses internally to position the annotation
+    // const transformed = viewport.convertToViewportRectangle(annotations[0]?.rect)
+    // console.log('transformed rect:', transformed)
+    // console.log('canvas size:', canvasRef.value.width, canvasRef.value.height)
+    // console.log('annotation layer size:', annotationLayerRef.value.offsetWidth, annotationLayerRef.value.offsetHeight)
+
     emit('page-change', { page: pageNum, total: totalPages.value })
+
   } catch (err) {
     if (err.name !== 'RenderingCancelledException') {
       console.error('Render error', err)
@@ -68,7 +116,7 @@ const renderPage = async (pageNum) => {
   }
 }
 
-const goTo = (pageNum) => {
+const goTo = (pageNum: number) => {
   const clamped = Math.max(1, Math.min(pageNum, totalPages.value))
   if (clamped === currentPage.value) return
   currentPage.value = clamped
@@ -78,7 +126,7 @@ const goTo = (pageNum) => {
 const prev = () => goTo(currentPage.value - 1)
 const next = () => goTo(currentPage.value + 1)
 
-const { direction, distanceX } = useSwipe(canvasRef, {
+const { direction } = useSwipe(canvasRef, {
   passive: true,
   onSwipeEnd(e, direction) {
     if (direction === 'left') {
@@ -89,16 +137,26 @@ const { direction, distanceX } = useSwipe(canvasRef, {
   },
 })
 
+const handleNavigation = (type) => {
+  const routes = {
+    merge: `/merge/${props.id}`,
+    compress: `/compress/${props.id}`,
+    exit: '/'
+  };
+  navigateTo(routes[type]);
+};
 // re-render if scale changes
 watch(scale, () => renderPage(currentPage.value))
 
 onMounted(async () => {
   totalPages.value = props.pdfDoc.numPages
+  // await testAnnotation(props.id);
   await renderPage(1)
   emit('ready', { total: totalPages.value })
   updateFullscreen()
   document.addEventListener('fullscreenchange', updateFullscreen)
-  document.addEventListener('click', closeOptions);
+  document.addEventListener('click', closeOptions)
+  document.addEventListener('keydown', handleKeyboard)
 })
 
 onBeforeUnmount(() => {
@@ -107,8 +165,18 @@ onBeforeUnmount(() => {
 
 onUnmounted(() => {
   document.removeEventListener('fullscreenchange', updateFullscreen)
-  document.removeEventListener('click', closeOptions);
+  document.removeEventListener('click', closeOptions)
+  document.removeEventListener('keydown', handleKeyboard)
 })
+
+const handleKeyboard = (e: KeyboardEvent) => {
+  if (!e || !e.code) return
+  if (e.code === 'ArrowLeft') {
+    prev()
+  } else if (e.code === 'ArrowRight') {
+    next()
+  }
+}
 
 const handleDelete = async () => {
   if (!window.confirm('Are you sure?')) return
@@ -132,9 +200,12 @@ const handleJumpTo = async () => {
 
 }
 
-const handleAnnotate = async () => {
-  console.log('ANNOT8')
-  slideOutMenuOpen.value = !slideOutMenuOpen.value
+const handleSticky = async () => {
+  console.log('STICKY NOTE')
+}
+
+const handleHighlight = async () => {
+  console.log('HIGHLIGHY')
 }
 
 const toggleOptions = async () => {
@@ -143,9 +214,9 @@ const toggleOptions = async () => {
 
 const closeOptions = (e) => {
   // Check if the click target is NOT inside the slidemenu
-  if (slideOutMenuOpen.value && !slideOutMenuRef.value.contains(e.target)) {
-    // slideOutMenuOpen.value = false
-  }
+  // if (slideOutMenuOpen.value && !slideOutMenuRef.value.contains(e.target)) {
+  // slideOutMenuOpen.value = false
+  // }
 }
 
 // expose so parent can call prev/next/goTo programmatically
@@ -155,48 +226,8 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
 <template>
   <div class="pdf-viewer" ref="canvasWrapRef">
 
-    <div ref="slideOutMenuRef" class="slideout-menu" :class="slideOutMenuOpen ? 'active' : ''">
-      <button class="close" @click="slideOutMenuOpen = false">
-        <Icon name="mdi:close-circle" />
-      </button>
-      <nav class="primary">
-        <button @click="isFullscreen = !isFullscreen">
-          <Icon :name="isFullscreen ? 'mdi:fullscreen-exit' : 'mdi:fullscreen'" />
-          {{ $t('fullscreen') }}
-        </button>
-
-        <button @click="handleAnnotate">
-          <Icon name="mdi:sticker" />
-          {{ $t('sticky_note') }}
-        </button>
-
-        <button @click="handleAnnotate">
-          <Icon name="mdi:signature-freehand" />
-          {{ $t('signature') }}
-        </button>
-
-        <button @click="handleDelete">
-          <Icon name="mdi:delete" />
-          {{ $t('delete_page') }}
-        </button>
-
-      </nav>
-
-      <nav>
-        <button @click="navigateTo(`/merge/${props.id}`)">
-          <!-- <Icon name="mdi:table-merge-cells" /> -->
-          {{ $t('merge') }}
-        </button>
-        <button @click="navigateTo(`/compress/${props.id}`)">
-          <!-- <Icon name="mdi:zip-box-outline" /> -->
-          {{ $t('compress') }}
-        </button>
-        <button class="danger" @click="navigateTo(`/`)">
-          <!-- <Icon name="mdi:exit-run" /> -->
-          {{ $t('exit_to_menu') }}
-        </button>
-      </nav>
-    </div>
+    <SlideoutMenu v-model="slideOutMenuOpen" :is-fullscreen="isFullscreen" @fullscreen="handleFullScreen"
+      @sticky="handleSticky" @highlight="handleHighlight" @delete="handleDelete" @navigate="handleNavigation" />
 
     <div class="page-nav primary">
       <div class="nav-group">
@@ -214,11 +245,11 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       <div class="spacer"></div>
 
       <div class="action-group">
-        <button class="action-btn" @click="handleFullScreen">
+        <button :title="$t('fullscreen')" class="action-btn" @click="handleFullScreen">
           <Icon :name="isFullscreen ? 'ic:outline-fullscreen-exit' : 'ic:outline-fullscreen'" />
         </button>
 
-        <button class="action-btn" @click="handleAnnotate">
+        <button :title="$t('options')" class="action-btn" @click="slideOutMenuOpen = !slideOutMenuOpen">
           <Icon name="ic:baseline-format-list-bulleted" />
           <span class="btn-label">{{ $t('options') }}</span>
         </button>
@@ -227,6 +258,7 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
 
     <div class="canvas-wrap">
       <canvas ref="canvasRef" class="pdf-canvas" />
+      <div ref="annotationLayerRef" class="annotation-layer" />
       <div v-if="isRendering" class="render-overlay">{{ $t('rendering') }}</div>
     </div>
 
@@ -256,6 +288,14 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   /* smooth scroll on iOS */
 }
 
+.annotation-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* width: 100%; */
+  /* height: 100%; */
+}
+
 .pdf-canvas {
   display: block;
   max-width: 100%;
@@ -276,78 +316,13 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   opacity: 0.7;
 }
 
-.slideout-menu {
-  position: absolute;
-  /* left: -300px; */
-  display: block;
-  right: -200px;
-  width: 0;
-  top: 0;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  z-index: 1;
-  transition: all .2s linear;
-}
-
-.slideout-menu.active {
-  width: 200px;
-  right: 0;
-}
-
-.slideout-menu button.close {
-  border: none;
-  background: transparent;
-  text-align: right;
-  width: 100%;
-  display: block;
-  text-indent: -9999px;
-  font-size: 150%;
-}
-
-.slideout-menu button.close:hover {
-  background: transparent;
-  color: crimson;
-}
-
-.slideout-menu button:hover {
-  transform: translateY(0);
-}
-
-.slideout-menu nav {
-  margin-top: 2rem;
-  display: block;
-  font-size: 120%;
-}
-
-.slideout-menu nav.primary button {
-  font-size: 80%;
-}
-
-
-.slideout-menu nav button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border-radius: 0;
-  border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: .5rem 1rem;
-}
-
-.slideout-menu nav button:hover {
-  background-color: darkorange;
-  border-bottom: 1px solid #000;
-  color: #222;
-}
-
-
 .page-nav.primary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   padding: 8px 16px;
-  background: #1a1a1a;
+  background: rgba(0, 0, 0, 0.7);
   box-sizing: border-box;
   /* Ensures padding doesn't break 100% width */
 }
@@ -370,6 +345,23 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   align-items: center;
   gap: 8px;
 }
+
+.page-nav button,
+.nav-group button {
+  border: none;
+  background: none;
+}
+
+.nav-group button {
+  border-radius: 100%;
+  font-size: 130%;
+}
+
+.page-nav button:hover {
+  transform: translateY(0);
+  background-color: transparent;
+}
+
 
 /* Page Indicator */
 .page-indicator {

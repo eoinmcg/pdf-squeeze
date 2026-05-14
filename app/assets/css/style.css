@@ -85,19 +85,6 @@
    Fullscreen shenanigans
    ------------------------------------------------------- */
 ::backdrop {
-  background-color: #4ade80; /* Base vibrant green */
-  background-image: 
-    /* Soft Blue Glow bottom left */
-    radial-gradient(at 0% 100%, hsla(190, 80%, 70%, 0.5) 0px, transparent 50%), 
-    /* Yellowish Highlight top left */
-    radial-gradient(at 15% 15%, hsla(65, 85%, 75%, 0.4) 0px, transparent 45%),
-    /* Deeper Green shadow/glow right side */
-    radial-gradient(at 90% 40%, hsla(145, 70%, 40%, 0.3) 0px, transparent 50%),
-    /* Soft Cyan middle bottom */
-    radial-gradient(at 50% 95%, hsla(170, 75%, 80%, 0.4) 0px, transparent 40%);
-  
-  /* Adds a slight grain if you want that textured look in the image */
-  background-blend-mode: normal;
 }
 
 /* Fallback for older browsers or specific element styling */
@@ -149,32 +136,32 @@ hr {
   margin: 2rem 0;
 }
 
-.card {
-  background: #333;
-  color: #fff;
-  border-radius: 5px;
-  border: 1px solid rgba(0,0,0,0.5);
-  box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
-  padding: 2rem;
-}
-
-
-.card p, li {
-  color: #fff;
-}
-
-.card h3 {
- color: #fff;
-  font-weight: normal;
-}
-
-.card a {
-  color: lime;
-  text-decoration: none;
-}
-.card a:hover {
-  color: hotpink;
-}
+/* .card { */
+/*   background: #333; */
+/*   color: #fff; */
+/*   border-radius: 5px; */
+/*   border: 1px solid rgba(0,0,0,0.5); */
+/*   box-shadow: 5px 5px 5px rgba(0,0,0,0.2); */
+/*   padding: 2rem; */
+/* } */
+/**/
+/**/
+/* .card p, li { */
+/*   color: #fff; */
+/* } */
+/**/
+/* .card h3 { */
+/*  color: #fff; */
+/*   font-weight: normal; */
+/* } */
+/**/
+/* .card a { */
+/*   color: lime; */
+/*   text-decoration: none; */
+/* } */
+/* .card a:hover { */
+/*   color: hotpink; */
+/* } */
 
 /* Card-like surfaces */
 .surface {
@@ -279,6 +266,17 @@ button.delete:hover {
 
 .border { border: var(--border-width) var(--border-style) var(--border-color); }
 
+/* .aurora-background { */
+/* position: fixed; */
+/* top: 0; */
+/* left: 0; */
+/* display: block; */
+/* width: 100%; */
+/* height: 100vh; */
+/* z-index: -1; */
+/*   background-color: beige; */
+/* background-blend-mode: normal; */
+/* } */
 .aurora-background {
   position: fixed;
   top: 0;
@@ -289,16 +287,17 @@ button.delete:hover {
   z-index: -1;
   /* We layer multiple gradients: the base color followed by glowing 'blobs' */
   background-color: #4ade80; /* Base vibrant green */
-  background-image: 
-    /* Soft Blue Glow bottom left */
-    radial-gradient(at 0% 100%, hsla(190, 80%, 70%, 0.5) 0px, transparent 50%), 
-    /* Yellowish Highlight top left */
-    radial-gradient(at 15% 15%, hsla(65, 85%, 75%, 0.4) 0px, transparent 45%),
-    /* Deeper Green shadow/glow right side */
-    radial-gradient(at 90% 40%, hsla(145, 70%, 40%, 0.3) 0px, transparent 50%),
-    /* Soft Cyan middle bottom */
-    radial-gradient(at 50% 95%, hsla(170, 75%, 80%, 0.4) 0px, transparent 40%);
-  
+  background-color: beige;
+  /* background-image:  */
+  /*   /* Soft Blue Glow bottom left */ 
+  /*   radial-gradient(at 0% 100%, hsla(190, 80%, 70%, 0.5) 0px, transparent 50%),  */
+  /*   /* Yellowish Highlight top left */ 
+  /*   radial-gradient(at 15% 15%, hsla(65, 85%, 75%, 0.4) 0px, transparent 45%), */
+  /*   /* Deeper Green shadow/glow right side */ 
+  /*   radial-gradient(at 90% 40%, hsla(145, 70%, 40%, 0.3) 0px, transparent 50%), */
+  /*   /* Soft Cyan middle bottom */ 
+  /*   radial-gradient(at 50% 95%, hsla(170, 75%, 80%, 0.4) 0px, transparent 40%); */
+
   /* Adds a slight grain if you want that textured look in the image */
   background-blend-mode: normal;
 }

@@ -1,18 +1,5 @@
-import { PDFDocument } from 'pdf-lib'
-import { openDB } from 'idb' // npm i idb — thin IndexedDB wrapper
-
-const DB_NAME = 'pdf-editor'
-const DB_VERSION = 4
-
-const getDb = () =>
-  openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('documents')) {
-        const store = db.createObjectStore('documents', { keyPath: 'id' });
-        store.createIndex('contentHash', 'contentHash', { unique: false });
-      }
-    }
-  })
+import { PDFDocument, PDFString, rgb } from 'pdf-lib'
+import { getDb } from '../lib/db'
 
 export const useFileStorage = () => {
 
@@ -45,6 +32,12 @@ export const useFileStorage = () => {
     await writable.write(file)
     await writable.close()
 
+    // const pdf = await loadingTask.promise
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+    const pageCount = pdf.numPages  // ← add to meta
+    const thumbnail = await generateThumbnail(pdf)
+    console.log(thumbnail);
+
     // 2. Write metadata to IndexedDB
     const meta = {
       id,
@@ -54,11 +47,69 @@ export const useFileStorage = () => {
       createdAt: Date.now(),
       lastOpenedAt: Date.now(),
       annotationCount: 0,
-      pageCount: null, // fill this in after PDF.js loads the doc
+      pageCount: pageCount,
+      thumbnail,
     }
     await db.put('documents', meta)
 
     return meta
+  }
+
+
+  const testAnnotation = async (docId: string) => {
+    const root = await navigator.storage.getDirectory()
+    const dir = await root.getDirectoryHandle('documents')
+    const fh = await dir.getFileHandle(`${docId}.pdf`)
+    const file = await fh.getFile()
+    const bytes = await file.arrayBuffer()
+    const pdfDoc = await PDFDocument.load(bytes)
+    const page = pdfDoc.getPage(0)
+    const { height } = page.getSize()
+    const annot = pdfDoc.context.obj({
+      Type: 'Annot',
+      Subtype: 'Text',
+      Rect: [50, height - 100, 80, height - 70],
+      Contents: PDFString.of('Hello from pdf-lib!'),
+      Open: true,
+      Name: 'Note',
+      C: [1, 0.8, 0],
+    })
+
+    const ref = pdfDoc.context.register(annot)
+    const pageRef = page.node
+    const existing = pageRef.get(pageRef.context.obj('Annots'))
+    if (existing) {
+      existing.push(ref)
+    } else {
+      pageRef.set(pageRef.context.obj('Annots'), pdfDoc.context.obj([ref]))
+    }
+
+    const saved = await pdfDoc.save()
+    const writable = await fh.createWritable()
+    await writable.write(saved)
+    await writable.close()
+
+    return
+  }
+
+  const generateThumbnail = async (pdf, thumbWidth = 160): Promise<string> => {
+    const page = await pdf.getPage(1)
+
+    const viewport = page.getViewport({ scale: 1 })
+    const scale = thumbWidth / viewport.width
+    const scaledViewport = page.getViewport({ scale })
+
+    const canvas = document.createElement('canvas')
+    canvas.width = scaledViewport.width
+    canvas.height = scaledViewport.height  // natural page height, no forced crop
+
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise
+
+    return canvas.toDataURL('image/webp', 0.8)
   }
 
   const loadFile = async (id: string) => {
@@ -181,5 +232,5 @@ export const useFileStorage = () => {
     return saveFile(mergedFile)  // returns the new meta
   }
 
-  return { saveFile, loadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage, mergePdfs }
+  return { saveFile, loadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage, mergePdfs, testAnnotation }
 }

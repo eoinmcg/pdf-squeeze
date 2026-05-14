@@ -1,9 +1,11 @@
 import { execSync } from 'child_process'
 import { readFileSync } from 'fs'
+import { svg4VuePlugin } from 'vite-plugin-svg4vue';
 
 const gitHash = execSync('git rev-parse --short HEAD').toString().trim()
 const buildTime = new Date().toISOString()
 const { version } = JSON.parse(readFileSync('./package.json', 'utf-8'))
+
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-05-05',
@@ -42,6 +44,11 @@ export default defineNuxtConfig({
     langDir: 'locales/'
   },
   vite: {
+    plugins: [
+      svg4VuePlugin({
+        assetsDirName: 'assets/icons', // Optional: specify directory
+      }),
+    ],
     define: {
       __GIT_HASH__: JSON.stringify(gitHash),
       __BUILD_TIME__: JSON.stringify(buildTime),

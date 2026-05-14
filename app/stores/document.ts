@@ -4,9 +4,11 @@ interface DocMeta {
   name: string
   size: number
   contentHash: string
+  thumbnail: string
   pageCount: number
   tags: string
   starred: boolean
+  exists?: boolean
   annotations: any[]  //@todo define Annotation interface
   annotationCount: number
   lastOpenedAt: number

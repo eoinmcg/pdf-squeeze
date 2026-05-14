@@ -12,7 +12,7 @@ const emit = defineEmits(['click'])
 <style>
 button.delete {
   background: rgba(255, 255, 255, 0.05);
-  color: #eee;
+  color: #666;
   border: 1px solid rgba(255, 255, 255, 0.1);
   margin-right: 1rem;
   width: 2.5rem;
@@ -21,6 +21,11 @@ button.delete {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+button.delete:hover {
+  transform: translateY(0);
+  color: #fff;
 }
 
 button.delete span.label {
