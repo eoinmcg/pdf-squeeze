@@ -49,6 +49,15 @@ export default defineNuxtConfig({
         assetsDirName: 'assets/icons', // Optional: specify directory
       }),
     ],
+    build: {
+      rollupOptions: {
+        onwarn(warning, handler) {
+          if (warning.code === 'INVALID_ANNOTATION') return
+          handler(warning)
+        }
+      }
+    },
+
     define: {
       __GIT_HASH__: JSON.stringify(gitHash),
       __BUILD_TIME__: JSON.stringify(buildTime),

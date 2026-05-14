@@ -29,7 +29,6 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
-    "@vueuse/core": "^14.3.0",
     "@vueuse/nuxt": "^14.3.0",
     "vite-plugin-svg4vue": "^4.5.1"
   }

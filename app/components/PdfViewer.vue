@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { AnnotationLayer } from 'pdfjs-dist'
-import 'pdfjs-dist/web/pdf_viewer.css'
+// import 'pdfjs-dist/web/pdf_viewer.css'
 
 const props = defineProps({
   pdfDoc: {
@@ -473,7 +473,7 @@ hr {
   }
 
   .page-nav.primary {
-    justify-content: space-around;
+    justify-content: space-between;
   }
 }
 </style>
