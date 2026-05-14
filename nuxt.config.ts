@@ -25,7 +25,7 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
   runtimeConfig: {
-    name: 'PDFd',
+    name: 'offgrid-PDF',
   },
   devServer: {
     port: 8009,

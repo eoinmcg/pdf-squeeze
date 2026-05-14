@@ -14,6 +14,9 @@ useHead({
 })
 
 const { toasts, closeToast } = useToast()
+const { isVisible, options, confirm, cancel, dialogRef } = useConfirm()
+
+
 
 </script>
 
@@ -28,6 +31,20 @@ const { toasts, closeToast } = useToast()
       <UiToast v-for="toast in toasts" :key="toast.id" :message="toast.message" :type="toast.type"
         :duration="toast.duration" @close="closeToast(toast.id)" />
     </TransitionGroup>
+
+    <Teleport to="body">
+      <dialog ref="dialogRef" class="confirm-modal">
+        <article>
+          <header><strong>{{ options.title }}</strong></header>
+          <p>{{ options.message }}</p>
+          <footer>
+            <button class="secondary" @click="cancel">{{ options.cancelText }}</button>
+            <button class="confirm" @click="confirm">{{ options.confirmText }}</button>
+          </footer>
+        </article>
+      </dialog>
+    </Teleport>
+
   </div>
 </template>
 
@@ -37,6 +54,31 @@ const { toasts, closeToast } = useToast()
   right: 10px;
   position: fixed;
   z-index: 2000;
+}
+
+dialog.confirm-modal {
+  border: none;
+  background: transparent;
+  /* The article provides the background */
+  padding: 0;
+}
+
+dialog.confirm-modal::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* Ensure Pico CSS styles apply inside the Top Layer */
+dialog.confirm-modal article {
+  width: 90vw;
+  max-width: 400px;
+  margin: 0;
+  background: var(--card-background-color, white);
+}
+
+dialog.confirm-modal button.confirm {
+  background-color: crimson;
+  color: #fff;
 }
 
 /* Slide animation */

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 
+const { t } = useI18n()
+
 const { isDebug } = useDebug()
 const { saveFile, getAllMeta, deleteFile } = useFileStorage()
 const { toast } = useToast()
+const { ask } = useConfirm()
 
 const docs = ref([]);
 
@@ -32,7 +35,14 @@ async function handleFile(file: File) {
 }
 
 const handleDelete = async (file: DocumentMeta) => {
-  if (!window.confirm(`Delete ${file.name}? Are you sure?`)) return;
+  const confirmed = await ask({
+    title: t('delete_pdf?'),
+    message: t('absolutely_sure_pdf?'),
+    confirmText: t('confirm_delete')
+
+  })
+  if (!confirmed) return
+
 
   await deleteFile(file.id);
 

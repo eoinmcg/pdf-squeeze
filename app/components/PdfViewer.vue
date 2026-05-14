@@ -3,6 +3,9 @@
 import { AnnotationLayer } from 'pdfjs-dist'
 // import 'pdfjs-dist/web/pdf_viewer.css'
 
+const { ask } = useConfirm()
+const { t } = useI18n()
+
 const props = defineProps({
   pdfDoc: {
     type: Object,
@@ -22,7 +25,6 @@ const annotationLayerRef = ref(null)
 const slideOutMenuOpen = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(0)
-const showOptions = ref(false)
 const isRendering = ref(false)
 const scale = ref(1.5)
 
@@ -155,7 +157,6 @@ onMounted(async () => {
   emit('ready', { total: totalPages.value })
   updateFullscreen()
   document.addEventListener('fullscreenchange', updateFullscreen)
-  document.addEventListener('click', closeOptions)
   document.addEventListener('keydown', handleKeyboard)
 })
 
@@ -165,7 +166,6 @@ onBeforeUnmount(() => {
 
 onUnmounted(() => {
   document.removeEventListener('fullscreenchange', updateFullscreen)
-  document.removeEventListener('click', closeOptions)
   document.removeEventListener('keydown', handleKeyboard)
 })
 
@@ -179,7 +179,12 @@ const handleKeyboard = (e: KeyboardEvent) => {
 }
 
 const handleDelete = async () => {
-  if (!window.confirm('Are you sure?')) return
+  const confirmed = await ask({
+    title: t('delete_page?'),
+    message: t('absolutely_sure_page?'),
+    confirmText: t('confirm_delete')
+  })
+  if (!confirmed) return
   emit('delete-page', { page: currentPage.value })
 }
 
@@ -201,23 +206,16 @@ const handleJumpTo = async () => {
 }
 
 const handleSticky = async () => {
+  slideOutMenuOpen.value = false;
   console.log('STICKY NOTE')
 }
 
 const handleHighlight = async () => {
+  slideOutMenuOpen.value = false;
   console.log('HIGHLIGHY')
 }
 
-const toggleOptions = async () => {
-  showOptions.value = !showOptions.value
-}
 
-const closeOptions = (e) => {
-  // Check if the click target is NOT inside the slidemenu
-  // if (slideOutMenuOpen.value && !slideOutMenuRef.value.contains(e.target)) {
-  // slideOutMenuOpen.value = false
-  // }
-}
 
 // expose so parent can call prev/next/goTo programmatically
 defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
@@ -256,7 +254,7 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       </div>
     </div>
 
-    <div class="canvas-wrap">
+    <div class="canvas-wrap" ref="canvasWrapRef">
       <canvas ref="canvasRef" class="pdf-canvas" />
       <div ref="annotationLayerRef" class="annotation-layer" />
       <div v-if="isRendering" class="render-overlay">{{ $t('rendering') }}</div>
@@ -286,6 +284,10 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   position: relative;
   -webkit-overflow-scrolling: touch;
   /* smooth scroll on iOS */
+}
+
+.canvas-wrap:fullscreen {
+  overflow: visible !important;
 }
 
 .annotation-layer {
