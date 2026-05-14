@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     }
   },
   app: {
-    baseURL: process.env.NODE_ENV === 'production' ? '/pdfd' : '/',
+    baseURL: process.env.NODE_ENV === 'production' ? '/offgrid-pdf' : '/',
     buildAssetsDir: 'assets',
     pageTransition: { name: 'page', mode: 'out-in' },
     // layoutTransition: false // Temporary debug
