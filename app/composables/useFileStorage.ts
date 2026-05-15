@@ -32,9 +32,8 @@ export const useFileStorage = () => {
     await writable.write(file)
     await writable.close()
 
-    // const pdf = await loadingTask.promise
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-    const pageCount = pdf.numPages  // ← add to meta
+    const pageCount = pdf.numPages
     const thumbnail = await generateThumbnail(pdf)
     console.log(thumbnail);
 
@@ -92,8 +91,8 @@ export const useFileStorage = () => {
     return
   }
 
-  const generateThumbnail = async (pdf, thumbWidth = 160): Promise<string> => {
-    const page = await pdf.getPage(1)
+  const generateThumbnail = async (pdf, pageNum = 1, thumbWidth = 160): Promise<string> => {
+    const page = await pdf.getPage(pageNum)
 
     const viewport = page.getViewport({ scale: 1 })
     const scale = thumbWidth / viewport.width
@@ -194,6 +193,47 @@ export const useFileStorage = () => {
     });
   }
 
+  /**
+   * Reorders the pages of an existing PDF document in OPFS.
+   * @param id The document ID
+   * @param pageIndices Array of original 0-based indices in their new sequence (e.g., [2, 0, 1])
+   */
+  const reorderPages = async (id: string, pageIndices: number[]) => {
+    const root = await navigator.storage.getDirectory()
+    const dir = await root.getDirectoryHandle('documents')
+
+    // 1. Get the file from OPFS
+    const fileHandle = await dir.getFileHandle(`${id}.pdf`)
+    const file = await fileHandle.getFile()
+    const arrayBuffer = await file.arrayBuffer()
+
+    // 2. Load the source PDF and establish a clean target PDF
+    const sourcePdfDoc = await PDFDocument.load(arrayBuffer)
+    const targetPdfDoc = await PDFDocument.create()
+
+    // 3. Copy pages over in the new sequence ordered by the user
+    // copyPages handles page mapping without degrading PDF elements or text content
+    const copiedPages = await targetPdfDoc.copyPages(sourcePdfDoc, pageIndices)
+
+    // 4. Inject the copied pages sequentially into your new document
+    copiedPages.forEach((page) => {
+      targetPdfDoc.addPage(page)
+    })
+
+    // 5. Serialize to bytes
+    const pdfBytes = await targetPdfDoc.save()
+
+    // 6. Write back to OPFS (Overwriting original file)
+    const writable = await fileHandle.createWritable()
+    await writable.write(pdfBytes)
+    await writable.close()
+
+    // 7. Update meta hash
+    const contentHash = hashBytes(pdfBytes)
+    updateMeta(id, {
+      contentHash
+    })
+  }
   const mergePdfs = async (id1: string, id2: string, name: string) => {
     const root = await navigator.storage.getDirectory()
     const dir = await root.getDirectoryHandle('documents')
@@ -232,5 +272,5 @@ export const useFileStorage = () => {
     return saveFile(mergedFile)  // returns the new meta
   }
 
-  return { saveFile, loadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage, mergePdfs, testAnnotation }
+  return { saveFile, loadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage, mergePdfs, testAnnotation, generateThumbnail, reorderPages }
 }

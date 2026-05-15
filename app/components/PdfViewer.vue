@@ -1,7 +1,6 @@
 <script setup lang="ts">
 
 import { AnnotationLayer } from 'pdfjs-dist'
-// import 'pdfjs-dist/web/pdf_viewer.css'
 
 const { ask } = useConfirm()
 const { t } = useI18n()
@@ -143,6 +142,7 @@ const handleNavigation = (type) => {
   const routes = {
     merge: `/merge/${props.id}`,
     compress: `/compress/${props.id}`,
+    reorder: `/reorder/${props.id}`,
     exit: '/'
   };
   navigateTo(routes[type]);

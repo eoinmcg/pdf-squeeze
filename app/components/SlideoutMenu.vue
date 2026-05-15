@@ -76,6 +76,9 @@ onUnmounted(() => {
     </nav>
 
     <nav>
+      <button @click="$emit('navigate', 'reorder')">
+        {{ $t('reorder') }}
+      </button>
       <button @click="$emit('navigate', 'merge')">
         {{ $t('merge') }}
       </button>

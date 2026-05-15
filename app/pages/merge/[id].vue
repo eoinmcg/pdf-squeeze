@@ -94,7 +94,7 @@ const docNames = computed(() =>
 }
 
 label {
-  color: #fff;
+  color: #333;
 }
 
 /* The placeholder "ghost" that shows where item will drop */
