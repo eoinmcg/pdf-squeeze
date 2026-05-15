@@ -44,19 +44,28 @@ onMounted(async () => {
     const arrayBuffer = await filePdf.value.arrayBuffer()
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
+
+    isLoading.value = false
+
     const promises = []
     for (let i = 1; i <= pdf.numPages; i++) {
-      promises.push(generateThumbnail(pdf, i, 120))
+      pages.value.push({ id: i - 1, thumbnail: '' })
+      promises.push(
+        generateThumbnail(pdf, i, 120).then(thumb => ({ pageIndex: i - 1, thumb }))
+      )
     }
-
-    const thumbnails = await Promise.all(promises)
-
-    pages.value = thumbnails.map((thumb, index) => ({
-      id: index,
-      thumbnail: thumb
-    }))
-
     originalOrderString.value = JSON.stringify(pages.value.map(p => p.id))
+
+    Promise.all(promises).then((resolvedThumbnails) => {
+      resolvedThumbnails.forEach(({ pageIndex, thumb }) => {
+        const targetPage = pages.value.find(p => p.id === pageIndex)
+        if (targetPage) {
+          targetPage.thumbnail = thumb
+        }
+      })
+    }).catch(err => {
+      console.error("Error generating thumbnail batch:", err)
+    })
   } catch (error) {
     console.error(error)
     toast(t('error_loading_file') || 'Failed to load document', 'error')
@@ -118,7 +127,10 @@ const handleSave = async () => {
             <Icon name="fa7-solid:trash-alt" />
           </button>
 
-          <img :src="element.thumbnail" alt="PDF Page thumbnail" />
+          <img :src="element.thumbnail" v-if="element.thumbnail" alt="PDF Page thumbnail" />
+          <div v-else>
+            <div class="loading" aria-busy="true"></div>
+          </div>
         </div>
       </template>
     </VueDraggable>
@@ -171,7 +183,6 @@ h3 {
   position: relative;
   background: white;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   cursor: grab;
@@ -199,7 +210,6 @@ h3 {
   max-width: 100%;
   height: auto;
   display: block;
-  border-radius: 4px;
 }
 
 .page-number {
