@@ -1,48 +1,61 @@
 <script setup>
 const props = defineProps({
   annotation: { type: Object, required: true },
-  canvasEl: { type: Object, required: true },  // the canvas element
-  pageHeight: { type: Number, required: true }, // PDF page height at scale 1
+  canvasEl: { type: Object, required: true },
+  pageHeight: { type: Number, required: true },
   scale: { type: Number, required: true },
 })
 
+const emit = defineEmits(['update', 'delete-annotation', 'drag-start', 'drag-end'])
 
-const emit = defineEmits(['update', 'delete', 'drag-start', 'drag-end'])
+// Available color presets (Tailwind-like background & border pairs)
+const colorPresets = [
+  { id: 'yellow', bg: '#fef9c3', border: '#d4b400' },
+  { id: 'blue', bg: '#e0f2fe', border: '#0284c7' },
+  { id: 'green', bg: '#dcfce7', border: '#16a34a' },
+  { id: 'pink', bg: '#fce7f3', border: '#db2777' }
+]
 
-watch(() => props.annotation.text, (newText) => {
-  text.value = newText
+// Fallback to yellow if the annotation doesn't have a color property yet
+const currentColor = computed(() => {
+  return colorPresets.find(c => c.id === props.annotation.color) || colorPresets[0]
+})
+
+watch(() => props.annotation.content, (newContent) => {
+  text.value = newContent
 })
 
 const noteRef = ref(null)
 const isEditing = ref(false)
-const text = ref(props.annotation.text)
+const text = ref(props.annotation.content)
 const isDragging = ref(false)
 const textareaRef = ref(null)
 const resizeTrigger = ref(0)
 let cachedCanvasDimensions = null
 
+const getCanvasDimensions = (customCache = null) => {
+  if (customCache) return customCache
+  return {
+    width: props.canvasEl?.clientWidth || 0,
+    naturalWidth: props.canvasEl?.width || 1
+  }
+}
 
-// convert PDF coords → screen px
 const toScreen = (rect) => {
-  // Use clientWidth to get the precise visual layout width of the canvas element
-  const canvasW = props.canvasEl.clientWidth
-  const canvasNatural = props.canvasEl.width  // actual internal pixel buffer width
-  const cssScale = canvasW / canvasNatural    // CSS shrink factor
+  const dims = getCanvasDimensions()
+  const cssScale = dims.width / dims.naturalWidth
 
   return {
     x: rect[0] * props.scale * cssScale,
-    // Ensure the Y calculation maps directly to the active scaling environment
     y: (props.pageHeight - rect[3]) * props.scale * cssScale,
     width: (rect[2] - rect[0]) * props.scale * cssScale,
     height: (rect[3] - rect[1]) * props.scale * cssScale,
   }
 }
 
-// convert screen px → PDF coords
-const toPdf = (x, y, width, height) => {
-  const canvasW = props.canvasEl.clientWidth
-  const canvasNatural = props.canvasEl.width
-  const cssScale = canvasW / canvasNatural
+const toPdf = (x, y, width, height, customCache = null) => {
+  const dims = getCanvasDimensions(customCache)
+  const cssScale = dims.width / dims.naturalWidth
 
   const pdfX = x / props.scale / cssScale
   const pdfY = props.pageHeight - (y / props.scale / cssScale)
@@ -53,9 +66,7 @@ const toPdf = (x, y, width, height) => {
 }
 
 const pos = computed(() => {
-  // Accessing this value tells Vue to re-run this computed block whenever resizeTrigger changes
   resizeTrigger.value
-
   return toScreen(props.annotation.rect)
 })
 
@@ -64,39 +75,41 @@ const cleanupGlobalListeners = () => {
   window.removeEventListener('pointerup', onPointerUp)
   window.removeEventListener('pointercancel', onPointerUp)
 }
+
 const startEditing = async () => {
   isEditing.value = true
-
   await nextTick()
-
   if (textareaRef.value) {
     textareaRef.value.focus()
-    // move cursor to the end of the text instead of the beginning
     const length = textareaRef.value.value.length
     textareaRef.value.setSelectionRange(length, length)
   }
 }
 
-// drag
 let dragStart = null
 let lastTap = 0
+
 const onPointerDown = (e) => {
   if (isEditing.value) return
+
+  // If clicking a menu item or button inside the note, don't trigger drag
+  if (e.target.closest('.color-dot') || e.target.closest('.delete-btn')) return
+
   e.preventDefault()
 
   const now = Date.now()
-  const DOUBLE_TAP_DELAY = 300 // ms
+  const DOUBLE_TAP_DELAY = 300
   if (now - lastTap < DOUBLE_TAP_DELAY) {
-    lastTap = 0 // Reset
+    lastTap = 0
     startEditing()
-    return // Stop here so we don't start dragging while trying to edit
+    return
   }
   lastTap = now
   isDragging.value = true
 
   cachedCanvasDimensions = {
     width: props.canvasEl.clientWidth,
-    naturalWidth: props.canvasEl.width
+    naturalWidth: props.canvasEl.width || 1
   }
 
   dragStart = {
@@ -115,8 +128,9 @@ const onPointerMove = (e) => {
   e.preventDefault()
   const x = e.clientX - dragStart.px
   const y = e.clientY - dragStart.py
-  const newRect = toPdf(x, y, pos.value.width, pos.value.height)
-  emit('update', { ...props.annotation, rect: newRect })
+
+  const newRect = toPdf(x, y, pos.value.width, pos.value.height, cachedCanvasDimensions)
+  emit('update', { ...toRaw(props.annotation), rect: newRect })
 }
 
 const onPointerUp = () => {
@@ -127,26 +141,27 @@ const onPointerUp = () => {
   cachedCanvasDimensions = null
 }
 
-const onDblClick = () => { isEditing.value = true }
-
 const onBlur = () => {
   isEditing.value = false
-  emit('update', { ...props.annotation, text: text.value })
+  emit('update', { ...toRaw(props.annotation), content: text.value })
 }
 
-const onDelete = () => emit('delete', props.annotation.id)
+// FLOURISH: Updates the color scheme in the parent data object
+const changeColor = (colorId) => {
+  emit('update', { ...toRaw(props.annotation), color: colorId })
+}
+
+const onDelete = () => {
+  emit('delete-annotation', props.annotation.id)
+}
 
 let resizeObserver = null
-
-// A helper to force Vue to recalculate everything
 const forceRecalculate = () => {
   resizeTrigger.value++
 }
 
-// Fullscreen transitions take a split second to settle in the DOM
 const handleFullscreenChange = () => {
   forceRecalculate()
-  // A tiny 100ms backup timeout ensures we capture the absolute final layout state
   setTimeout(forceRecalculate, 100)
 }
 
@@ -159,25 +174,37 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
+  if (resizeObserver) resizeObserver.disconnect()
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
   cleanupGlobalListeners()
 })
-
 </script>
 
 <template>
-  <div ref="noteRef" class="sticky-note" :class="{ dragging: isDragging, editing: isEditing }"
-    :style="{ left: `${pos.x}px`, top: `${pos.y}px`, width: `${pos.width}px`, minHeight: `${pos.height}px` }"
-    @pointerdown="onPointerDown" @dblclick="onDblClick">
+  <div ref="noteRef" class="sticky-note" :class="{ dragging: isDragging, editing: isEditing }" :style="{
+    left: `${pos.x}px`,
+    top: `${pos.y}px`,
+    width: `${pos.width}px`,
+    minHeight: `${pos.height}px`,
+    background: currentColor.bg,
+    borderColor: currentColor.border
+  }" @pointerdown="onPointerDown">
+
     <div class="note-toolbar">
-      <button class="delete-btn" @pointerdown.stop @click="onDelete">✕</button>
+      <div class="color-palette">
+        <button v-for="preset in colorPresets" :key="preset.id" class="color-dot"
+          :class="{ active: preset.id === currentColor.id }"
+          :style="{ backgroundColor: preset.bg, borderColor: preset.border }" @click="changeColor(preset.id)"
+          :title="`Switch to ${preset.id}`" />
+      </div>
+      <button class="delete-btn" @pointerdown.stop @click="onDelete">
+        <Icon name="fa7-solid:trash-alt" />
+      </button>
     </div>
+
     <textarea v-if="isEditing" v-model="text" ref="textareaRef" class="note-textarea" @blur="onBlur"
       @pointerdown.stop />
-    <div v-else class="note-text">{{ text }}</div>
+    <div v-else class="note-text">{{ annotation.content }}</div>
   </div>
 </template>
 
@@ -185,17 +212,19 @@ onUnmounted(() => {
 .sticky-note {
   touch-action: none;
   position: absolute;
-  background: #fef9c3;
   border: 1px solid #d4b400;
   border-radius: 4px;
-  padding: 4px;
+  padding: 6px;
+  /* slightly increased internal breathing room */
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
   cursor: grab;
   user-select: none;
   z-index: 10;
   display: flex;
   flex-direction: column;
+  min-width: 120px;
   box-sizing: border-box;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .sticky-note.dragging {
@@ -204,16 +233,69 @@ onUnmounted(() => {
   box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* FLOURISH: Absolute position the menu completely outside the container body */
 .note-toolbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -18px;
+  /* Shifts the menu exactly 28px above the top boundary line */
+
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 2px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+  /* Prevents an invisible layout box from blocking page elements */
+
+  /* Your updated adjustment: completely invisible by default */
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform: translateY(4px);
+}
+
+/* Toolbar slides up slightly and reveals itself on user interaction */
+.sticky-note:hover .note-toolbar,
+.sticky-note.editing .note-toolbar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  /* Re-enable pointer events only when visible */
+}
+
+.color-palette {
+  display: flex;
+  gap: 4px;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition: transform 0.1s ease;
+}
+
+.color-dot:hover {
+  transform: scale(1.2);
+}
+
+.color-dot.active {
+  transform: scale(1.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .delete-btn {
   background: transparent;
   border: none;
-  color: #999;
+  color: #666;
   font-size: 10px;
   cursor: pointer;
   padding: 0 2px;
@@ -244,5 +326,7 @@ onUnmounted(() => {
   resize: none;
   outline: none;
   font-family: inherit;
+  min-width: 120px;
+  padding: 0;
 }
 </style>

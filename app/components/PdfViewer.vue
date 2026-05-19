@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getDb } from '../lib/db'
 
 const { ask } = useConfirm()
 const { t } = useI18n()
@@ -11,6 +12,10 @@ const props = defineProps({
   },
   id: {
     type: String,
+    required: true
+  },
+  fileMetaData: {
+    type: Object,
     required: true
   },
 })
@@ -32,6 +37,13 @@ const scale = ref(1.5)
 
 const isFullscreen = ref(false)
 const isPlacingNote = ref(false)
+
+const pageId = computed(() => props.fileMetaData?.pages?.[currentPage.value - 1]?.id)
+
+watch(currentPage, async () => {
+  if (!pageId.value) return
+  await loadForPage(pageId.value)
+}, { immediate: true })
 
 const updateFullscreen = () => {
   isFullscreen.value = !!document.fullscreenElement
@@ -62,10 +74,9 @@ const renderPage = async (pageNum) => {
     await renderTask.promise
 
 
-    emit('page-change', { page: pageNum, total: totalPages.value })
 
     baseViewport.value = viewport
-    await loadForPage(page, baseViewport.height, scale.value)
+    await loadForPage(pageId.value)
 
   } catch (err) {
     if (err.name !== 'RenderingCancelledException') {
@@ -78,22 +89,22 @@ const renderPage = async (pageNum) => {
 }
 
 
-
 const onCanvasClick = (e) => {
-  console.log(isPlacingNote.value)
   if (!isPlacingNote.value) return
-
   const { left, top } = canvasRef.value.getBoundingClientRect()
   const cssScale = canvasRef.value.getBoundingClientRect().width / canvasRef.value.width
-
-  // Convert from screen px → canvas px → PDF units
   const x = (e.clientX - left) / cssScale / scale.value
   const y = baseViewport.value.height - (e.clientY - top) / cssScale / scale.value
-  console.log(x, y)
 
-  addAnnotation([x, y - 50, x + 150, y])
+  addAnnotation(pageId.value, {
+    type: 'sticky',
+    rect: [x, y - 50, x + 150, y],
+    content: ''
+  })
+
   isPlacingNote.value = false
 }
+
 const goTo = (pageNum: number) => {
   const clamped = Math.max(1, Math.min(pageNum, totalPages.value))
   if (clamped === currentPage.value) return
@@ -136,6 +147,13 @@ onMounted(async () => {
   updateFullscreen()
   document.addEventListener('fullscreenchange', updateFullscreen)
   document.addEventListener('keydown', handleKeyboard)
+
+  const db = await getDb()
+  const doc = await db.get('documents', props.id)
+  const pages = doc.pages
+  pages.forEach((page) => {
+    console.log(page.id, page.annotations)
+  })
 })
 
 onBeforeUnmount(() => {
@@ -159,12 +177,6 @@ const handleKeyboard = (e: KeyboardEvent) => {
 const handleDownload = async () => {
   console.log(props.pdfDoc)
   await downloadFile(props.id)
-  // const url = URL.createObjectURL(filePdf.value)
-  // const a = document.createElement('a')
-  // a.href = url
-  // a.download = fileMeta.value.name
-  // a.click()
-  // URL.revokeObjectURL(url)
 }
 
 const handleDelete = async () => {
@@ -174,12 +186,14 @@ const handleDelete = async () => {
     confirmText: t('confirm_delete')
   })
   if (!confirmed) return
-  emit('delete-page', { page: currentPage.value })
-}
 
-const handleSave = async () => {
-  await save(currentPage.value - 1)
-  toast('saved')
+  const db = await getDb()
+  const doc = await db.get('documents', props.id)
+
+  const pages = doc.pages
+  doc.pages = pages.filter(page => page.id !== pageId.value)
+
+  await db.put('documents', doc)
 }
 
 const handleFullScreen = async () => {
@@ -195,6 +209,7 @@ const handleFullScreen = async () => {
     console.error(`Fullscreen error: ${err.message}`);
   }
 }
+
 const handleJumpTo = async () => {
 
 }
@@ -208,8 +223,6 @@ const handleHighlight = async () => {
   slideOutMenuOpen.value = false;
   console.log('HIGHLIGHT')
 }
-
-
 
 // expose so parent can call prev/next/goTo programmatically
 defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
@@ -238,9 +251,6 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       <div class="spacer"></div>
 
       <div class="action-group">
-        <button :title="$t('fullscreen')" class="action-btn" @click="handleSave">
-          <Icon name="fa7-solid:save" />
-        </button>
         <button :title="$t('fullscreen')" class="action-btn" @click="handleFullScreen">
           <Icon :name="isFullscreen ? 'ic:outline-fullscreen-exit' : 'ic:outline-fullscreen'" />
         </button>
@@ -256,13 +266,16 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       <div class="canvas-container">
         <canvas ref="canvasRef" class="pdf-canvas" />
         <StickyNote v-for="ann in annotations" :key="ann.id" :annotation="ann" :canvas-el="canvasRef"
-          :page-height="baseViewport.height" :scale="scale" @update="updateAnnotation" @delete="deleteAnnotation"
-          @drag-start="isAnnotationDragging = true" @drag-end="isAnnotationDragging = false" />
+          :page-height="baseViewport.height" :scale="scale" @update="(ann) => updateAnnotation(pageId, ann)"
+          @delete-annotation="(id) => deleteAnnotation(pageId, id)" @drag-start="isAnnotationDragging = true"
+          @drag-end="isAnnotationDragging = false" />
       </div>
       <div v-if="isRendering" class="render-overlay">{{ $t('rendering') }}</div>
     </div>
 
   </div>
+  <pre>PID: {{ pageId }}</pre>
+  <pre>ANNOTS: {{ annotations }}</pre>
 </template>
 
 <style scoped>

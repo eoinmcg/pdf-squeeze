@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import VueDraggable from 'vuedraggable'
 
@@ -111,6 +110,9 @@ const handleSave = async () => {
         </NuxtLink>
       </h3>
 
+      <button>
+        INSERT BLANK PAGE
+      </button>
       <button class="btn-save" :disabled="!hasChanges || isSaving" @click="handleSave">
         {{ isSaving ? t('saving') || 'Saving...' : t('save') || 'Save Changes' }}
       </button>
@@ -249,5 +251,32 @@ h3 {
   opacity: 0.4;
   background: #e0e7ff;
   border: 2px dashed #4f46e5;
+}
+
+/* Target devices that support touch input as their primary interaction */
+@media (pointer: coarse) {
+  .note-toolbar {
+    top: -24px;
+    /* Give it a tiny bit more room for larger buttons */
+    padding: 4px 6px;
+    gap: 8px;
+  }
+
+  .color-palette {
+    gap: 8px;
+    /* Spaces out the dots so fingers don't misclick */
+  }
+
+  .color-dot {
+    width: 18px;
+    /* Enlarges the visual circle */
+    height: 18px;
+  }
+
+  .delete-btn {
+    font-size: 14px;
+    /* Larger hit target for the delete button */
+    padding: 4px 6px;
+  }
 }
 </style>

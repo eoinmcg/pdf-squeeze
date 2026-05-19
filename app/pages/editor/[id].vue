@@ -29,20 +29,37 @@ onMounted(async () => {
 })
 
 const loadPdf = async (opts = {}) => {
-
   let meta = {}
-
   try {
     const file = await loadFile(ID)
     const arrayBuffer = await file.arrayBuffer()
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
-    meta.lastOpenedAt = Date.now();
-    meta.pageCount = doc.numPages;
+    meta.lastOpenedAt = Date.now()
+    meta.pageCount = doc.numPages
+    pdfDoc.value = markRaw(doc)
 
-    pdfDoc.value = markRaw(doc) // tell Vue: don't touch this object
-    fileMetaData.value = await getMeta(ID);
-    pdfReloadKey.value++; // force reload
+    const existingMeta = await getMeta(ID)
+
+    // Build or maintain page metadata structural integrity
+    if (!existingMeta.pages?.length || existingMeta.pages.length !== doc.numPages) {
+      const existingPages = existingMeta.pages ?? []
+      meta.pages = Array.from({ length: doc.numPages }, (_, i) => (
+        existingPages[i] ?? {
+          id: crypto.randomUUID(),
+          thumbnail: null,
+          annotations: []
+        }
+      ))
+    } else {
+      // KEEP the existing pages array layout if the page count matches!
+      meta.pages = existingMeta.pages
+    }
+
+    // Assign the fully resolved metadata structure straight to your reactive state
+    fileMetaData.value = { ...existingMeta, ...meta }
+
+    pdfReloadKey.value++
   } catch (e) {
     error.value = true
   } finally {
@@ -52,7 +69,6 @@ const loadPdf = async (opts = {}) => {
   if (Object.keys(meta).length) {
     await updateMeta(ID, meta)
   }
-
 }
 
 const handlePageDelete = async (payload) => {
@@ -81,7 +97,8 @@ const saveMetadata = async () => {
     <div v-else-if="pdfDoc">
       <EditableTitle v-model="fileMetaData.name" @update:modelValue="saveMetadata" />
 
-      <PdfViewer v-if="pdfDoc" :key="pdfReloadKey" :id="ID" :pdf-doc="pdfDoc" @delete-page="handlePageDelete" />
+      <PdfViewer v-if="pdfDoc" :key="pdfReloadKey" :id="ID" :pdf-doc="pdfDoc" :fileMetaData="fileMetaData"
+        @delete-page="handlePageDelete" />
 
     </div>
     <div v-else-if="error" class="error card">

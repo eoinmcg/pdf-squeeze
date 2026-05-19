@@ -202,14 +202,14 @@ export const useFileStorage = () => {
     await writable.close()
 
     // 5. update meta
-    const contentHash = hashBytes(pdfBytes);
+    const contentHash = await hashBytes(pdfBytes);
     updateMeta(id, {
       contentHash
     });
   }
 
   /**
-   * Reorders the pages of an existing PDF document in OPFS.
+   * Reorders the pages of an existing PDF document in OPFS and matches IndexedDB metadata.
    * @param id The document ID
    * @param pageIndices Array of original 0-based indices in their new sequence (e.g., [2, 0, 1])
    */
@@ -227,7 +227,6 @@ export const useFileStorage = () => {
     const targetPdfDoc = await PDFDocument.create()
 
     // 3. Copy pages over in the new sequence ordered by the user
-    // copyPages handles page mapping without degrading PDF elements or text content
     const copiedPages = await targetPdfDoc.copyPages(sourcePdfDoc, pageIndices)
 
     // 4. Inject the copied pages sequentially into your new document
@@ -238,17 +237,32 @@ export const useFileStorage = () => {
     // 5. Serialize to bytes
     const pdfBytes = await targetPdfDoc.save()
 
-    // 6. Write back to OPFS (Overwriting original file)
+    // 6. Write back to OPFS
     const writable = await fileHandle.createWritable()
     await writable.write(pdfBytes)
     await writable.close()
 
-    // 7. Update meta hash
-    const contentHash = hashBytes(pdfBytes)
-    updateMeta(id, {
-      contentHash
-    })
+    // 7. NEW: Synchronize your IndexedDB page metadata order
+    const existingMeta = await getMeta(id)
+
+    if (existingMeta && existingMeta.pages) {
+      // Re-map the pages array following the same layout map chosen by the user
+      const reorderedPages = pageIndices.map(index => existingMeta.pages[index])
+
+      // Compute the content hash alongside the updated page structure
+      const contentHash = await hashBytes(pdfBytes)
+
+      await updateMeta(id, {
+        contentHash,
+        pages: reorderedPages // Replaces the database array structure with the matching order
+      })
+    } else {
+      // Fallback if metadata wrapper didn't exist for some reason
+      const contentHash = hashBytes(pdfBytes)
+      await updateMeta(id, { contentHash })
+    }
   }
+
   const mergePdfs = async (id1: string, id2: string, name: string) => {
     const root = await navigator.storage.getDirectory()
     const dir = await root.getDirectoryHandle('documents')
