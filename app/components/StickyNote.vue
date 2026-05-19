@@ -6,7 +6,6 @@ const props = defineProps({
   scale: { type: Number, required: true },
 })
 
-
 const emit = defineEmits(['update', 'delete', 'drag-start', 'drag-end'])
 
 watch(() => props.annotation.text, (newText) => {

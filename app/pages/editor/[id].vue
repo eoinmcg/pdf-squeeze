@@ -29,7 +29,6 @@ onMounted(async () => {
 })
 
 const loadPdf = async (opts = {}) => {
-
   let meta = {}
 
   try {
@@ -37,14 +36,17 @@ const loadPdf = async (opts = {}) => {
     const arrayBuffer = await file.arrayBuffer()
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
+    // 1. Clear the visual appearance streams so the background canvas stays clean
+
     meta.lastOpenedAt = Date.now();
     meta.pageCount = doc.numPages;
 
-    pdfDoc.value = markRaw(doc) // tell Vue: don't touch this object
+    pdfDoc.value = markRaw(doc)
     fileMetaData.value = await getMeta(ID);
-    pdfReloadKey.value++; // force reload
+    pdfReloadKey.value++;
   } catch (e) {
     error.value = true
+    console.error('PDF Load Error:', e)
   } finally {
     loading.value = false
   }
@@ -52,7 +54,6 @@ const loadPdf = async (opts = {}) => {
   if (Object.keys(meta).length) {
     await updateMeta(ID, meta)
   }
-
 }
 
 const handlePageDelete = async (payload) => {
@@ -69,6 +70,7 @@ const saveMetadata = async () => {
   await updateMeta(ID, { name: fileMetaData.value.name })
   toast(t('file_renamed'))
 }
+
 
 
 </script>

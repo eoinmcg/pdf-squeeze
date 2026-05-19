@@ -15,8 +15,8 @@ const props = defineProps({
   },
 })
 
-const { annotations, loadForPage, addAnnotation, updateAnnotation, deleteAnnotation, save } = useAnnotations(props.id)
 const { downloadFile } = useFileStorage()
+const { docAnnotations, loadForPage, addAnnotation, updateAnnotation, deleteAnnotation, save } = useAnnotations(props.id)
 
 const emit = defineEmits(['page-change', 'ready', 'delete-page'])
 
@@ -33,15 +33,19 @@ const scale = ref(1.5)
 const isFullscreen = ref(false)
 const isPlacingNote = ref(false)
 
+const pageAnnotations = computed(() => {
+  if (!docAnnotations.value) return []
+  const zeroBasedIndex = currentPage.value - 1
+  return docAnnotations.value[zeroBasedIndex] || []
+})
+
 const updateFullscreen = () => {
   isFullscreen.value = !!document.fullscreenElement
 }
 let renderTask = null
-
 const renderPage = async (pageNum) => {
   if (!canvasRef.value || isRendering.value) return
 
-  // cancel any in-flight render
   if (renderTask) {
     renderTask.cancel()
     renderTask = null
@@ -61,11 +65,12 @@ const renderPage = async (pageNum) => {
     renderTask = page.render({ canvasContext: ctx, viewport })
     await renderTask.promise
 
-
     emit('page-change', { page: pageNum, total: totalPages.value })
-
     baseViewport.value = viewport
-    await loadForPage(page, baseViewport.height, scale.value)
+
+    // --- 2. Unified 0-based index parameter pass down to the loader ---
+    const zeroBasedIndex = pageNum - 1
+    await loadForPage(page, zeroBasedIndex)
 
   } catch (err) {
     if (err.name !== 'RenderingCancelledException') {
@@ -76,24 +81,36 @@ const renderPage = async (pageNum) => {
     renderTask = null
   }
 }
+const handleAddAnnotation = (rect) => {
+  const pageIndex = currentPage.value - 1
+  addAnnotation(pageIndex, rect)
+  // FIXED: Removed the invalid pageAnnotations.value assignment line!
+}
 
+const handleUpdateAnnotation = (updated) => {
+  const pageIndex = currentPage.value - 1
+  updateAnnotation(pageIndex, updated)
+}
 
+const handleDeleteAnnotation = (id: string) => {
+  const pageIndex = currentPage.value - 1
+  deleteAnnotation(pageIndex, id)
+}
 
 const onCanvasClick = (e) => {
-  console.log(isPlacingNote.value)
   if (!isPlacingNote.value) return
 
   const { left, top } = canvasRef.value.getBoundingClientRect()
   const cssScale = canvasRef.value.getBoundingClientRect().width / canvasRef.value.width
 
-  // Convert from screen px → canvas px → PDF units
   const x = (e.clientX - left) / cssScale / scale.value
   const y = baseViewport.value.height - (e.clientY - top) / cssScale / scale.value
-  console.log(x, y)
 
-  addAnnotation([x, y - 50, x + 150, y])
+  // Safely registers under 0-based index layouts
+  addAnnotation(currentPage.value - 1, [x, y - 50, x + 150, y])
   isPlacingNote.value = false
 }
+
 const goTo = (pageNum: number) => {
   const clamped = Math.max(1, Math.min(pageNum, totalPages.value))
   if (clamped === currentPage.value) return
@@ -134,6 +151,13 @@ onMounted(async () => {
   await renderPage(1)
   emit('ready', { total: totalPages.value })
   updateFullscreen()
+  docAnnotations.value[0] = [
+    {
+      id: "calibrated-test-sticky",
+      text: "BOTTOM LEFT CALIBRATION",
+      rect: [31.77, 453.12, 181.77, 503.12]
+    }
+  ]
   document.addEventListener('fullscreenchange', updateFullscreen)
   document.addEventListener('keydown', handleKeyboard)
 })
@@ -156,15 +180,23 @@ const handleKeyboard = (e: KeyboardEvent) => {
   }
 }
 
+
+
 const handleDownload = async () => {
-  console.log(props.pdfDoc)
-  await downloadFile(props.id)
-  // const url = URL.createObjectURL(filePdf.value)
-  // const a = document.createElement('a')
-  // a.href = url
-  // a.download = fileMeta.value.name
-  // a.click()
-  // URL.revokeObjectURL(url)
+  try {
+    // 1. Force the active page elements to write directly to disk storage
+    const pageIndex = currentPage.value - 1
+    await save(pageIndex)
+
+    // 2. CRITICAL SYNC FIX: Force your local storage utility to fetch 
+    // the freshly modified file buffer from the OPFS storage layer,
+    // rather than relying on memory-cached props.
+    await downloadFile(props.id)
+
+    toast(t('download_started'))
+  } catch (err) {
+    console.error('Failed to prepare download bundle:', err)
+  }
 }
 
 const handleDelete = async () => {
@@ -255,14 +287,16 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
     <div class="canvas-wrap" ref="canvasWrapRef" @click="onCanvasClick">
       <div class="canvas-container">
         <canvas ref="canvasRef" class="pdf-canvas" />
-        <StickyNote v-for="ann in annotations" :key="ann.id" :annotation="ann" :canvas-el="canvasRef"
-          :page-height="baseViewport.height" :scale="scale" @update="updateAnnotation" @delete="deleteAnnotation"
-          @drag-start="isAnnotationDragging = true" @drag-end="isAnnotationDragging = false" />
+        <StickyNote v-for="ann in pageAnnotations" :key="ann.id" :annotation="ann" :canvas-el="canvasRef"
+          :page-height="baseViewport.height" :scale="scale" @update="handleUpdateAnnotation"
+          @delete="handleDeleteAnnotation" @drag-start="isAnnotationDragging = true"
+          @drag-end="isAnnotationDragging = false" />
       </div>
       <div v-if="isRendering" class="render-overlay">{{ $t('rendering') }}</div>
     </div>
 
   </div>
+  <pre>{{ pageAnnotations }}</pre>
 </template>
 
 <style scoped>
