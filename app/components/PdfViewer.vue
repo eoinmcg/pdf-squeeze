@@ -1,9 +1,8 @@
 <script setup lang="ts">
 
-import { AnnotationLayer } from 'pdfjs-dist'
-
 const { ask } = useConfirm()
 const { t } = useI18n()
+const { toast } = useToast()
 
 const props = defineProps({
   pdfDoc: {
@@ -13,14 +12,18 @@ const props = defineProps({
   id: {
     type: String,
     required: true
-  }
+  },
 })
+
+const { annotations, loadForPage, addAnnotation, updateAnnotation, deleteAnnotation, save } = useAnnotations(props.id)
+const { downloadFile } = useFileStorage()
 
 const emit = defineEmits(['page-change', 'ready', 'delete-page'])
 
-const canvasWrapRef = ref(null)
+const baseViewport = ref({ height: 0, width: 0 })
+const viewerRef = ref(null)      // fullscreen target (outer .pdf-viewer)
+const canvasWrapRef = ref(null)  // scroll container (inner .canvas-wrap)
 const canvasRef = ref(null)
-const annotationLayerRef = ref(null)
 const slideOutMenuOpen = ref(false)
 const currentPage = ref(1)
 const totalPages = ref(0)
@@ -28,6 +31,7 @@ const isRendering = ref(false)
 const scale = ref(1.5)
 
 const isFullscreen = ref(false)
+const isPlacingNote = ref(false)
 
 const updateFullscreen = () => {
   isFullscreen.value = !!document.fullscreenElement
@@ -58,54 +62,10 @@ const renderPage = async (pageNum) => {
     await renderTask.promise
 
 
-    // annotation layer — needs a div overlaid on the canvas
-    annotationLayerRef.value.innerHTML = ''
-    annotationLayerRef.value.style.width = `${canvas.width}px`
-    annotationLayerRef.value.style.height = `${canvas.height}px`
-    const annotations = await page.getAnnotations()
-    const linkService = {
-      getDestinationHash: () => '',
-      getAnchorUrl: () => '',
-      addLinkAttributes: () => { },
-      navigateTo: () => { },
-      goToDestination: () => { },
-      page: pageNum,
-      pagesCount: totalPages.value,
-      externalLinkTarget: null,
-      externalLinkRel: null,
-      externalLinkEnabled: false,
-    }
-
-    const annotationLayer = new AnnotationLayer({
-      viewport: viewport.clone({ dontFlip: true }),
-      div: annotationLayerRef.value,
-      annotations,
-      page,
-      linkService,
-      renderForms: false,
-    })
-
-    await annotationLayer.render({
-      viewport: viewport.clone({ dontFlip: true }),
-      div: annotationLayerRef.value,
-      annotations,
-      page,
-      linkService,
-      renderForms: false,
-    })
-
-    // const filtered = annotations.filter(a => a.subtype !== 'Link')
-    // console.log('non-link annotations:', filtered)
-    //
-    // console.log('raw rect:', annotations[0]?.rect)
-    //
-    // // this is what PDF.js uses internally to position the annotation
-    // const transformed = viewport.convertToViewportRectangle(annotations[0]?.rect)
-    // console.log('transformed rect:', transformed)
-    // console.log('canvas size:', canvasRef.value.width, canvasRef.value.height)
-    // console.log('annotation layer size:', annotationLayerRef.value.offsetWidth, annotationLayerRef.value.offsetHeight)
-
     emit('page-change', { page: pageNum, total: totalPages.value })
+
+    baseViewport.value = viewport
+    await loadForPage(page, baseViewport.height, scale.value)
 
   } catch (err) {
     if (err.name !== 'RenderingCancelledException') {
@@ -117,6 +77,23 @@ const renderPage = async (pageNum) => {
   }
 }
 
+
+
+const onCanvasClick = (e) => {
+  console.log(isPlacingNote.value)
+  if (!isPlacingNote.value) return
+
+  const { left, top } = canvasRef.value.getBoundingClientRect()
+  const cssScale = canvasRef.value.getBoundingClientRect().width / canvasRef.value.width
+
+  // Convert from screen px → canvas px → PDF units
+  const x = (e.clientX - left) / cssScale / scale.value
+  const y = baseViewport.value.height - (e.clientY - top) / cssScale / scale.value
+  console.log(x, y)
+
+  addAnnotation([x, y - 50, x + 150, y])
+  isPlacingNote.value = false
+}
 const goTo = (pageNum: number) => {
   const clamped = Math.max(1, Math.min(pageNum, totalPages.value))
   if (clamped === currentPage.value) return
@@ -127,14 +104,16 @@ const goTo = (pageNum: number) => {
 const prev = () => goTo(currentPage.value - 1)
 const next = () => goTo(currentPage.value + 1)
 
-const { direction } = useSwipe(canvasRef, {
+const isAnnotationDragging = ref(false)
+useSwipe(canvasRef, {
   passive: true,
+  onSwipeStart() {
+    if (isAnnotationDragging.value) return false  // block swipe
+  },
   onSwipeEnd(e, direction) {
-    if (direction === 'left') {
-      next() // Your next page function
-    } else if (direction === 'right') {
-      prev() // Your prev page function
-    }
+    if (isAnnotationDragging.value) return        // block swipe
+    if (direction === 'left') next()
+    else if (direction === 'right') prev()
   },
 })
 
@@ -152,7 +131,6 @@ watch(scale, () => renderPage(currentPage.value))
 
 onMounted(async () => {
   totalPages.value = props.pdfDoc.numPages
-  // await testAnnotation(props.id);
   await renderPage(1)
   emit('ready', { total: totalPages.value })
   updateFullscreen()
@@ -178,6 +156,17 @@ const handleKeyboard = (e: KeyboardEvent) => {
   }
 }
 
+const handleDownload = async () => {
+  console.log(props.pdfDoc)
+  await downloadFile(props.id)
+  // const url = URL.createObjectURL(filePdf.value)
+  // const a = document.createElement('a')
+  // a.href = url
+  // a.download = fileMeta.value.name
+  // a.click()
+  // URL.revokeObjectURL(url)
+}
+
 const handleDelete = async () => {
   const confirmed = await ask({
     title: t('delete_page?'),
@@ -188,8 +177,13 @@ const handleDelete = async () => {
   emit('delete-page', { page: currentPage.value })
 }
 
+const handleSave = async () => {
+  await save(currentPage.value - 1)
+  toast('saved')
+}
+
 const handleFullScreen = async () => {
-  const div = canvasWrapRef.value;
+  const div = viewerRef.value
 
   try {
     if (!document.fullscreenElement) {
@@ -206,13 +200,13 @@ const handleJumpTo = async () => {
 }
 
 const handleSticky = async () => {
-  slideOutMenuOpen.value = false;
-  console.log('STICKY NOTE')
+  slideOutMenuOpen.value = false
+  isPlacingNote.value = true
 }
 
 const handleHighlight = async () => {
   slideOutMenuOpen.value = false;
-  console.log('HIGHLIGHY')
+  console.log('HIGHLIGHT')
 }
 
 
@@ -222,10 +216,11 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
 </script>
 
 <template>
-  <div class="pdf-viewer" ref="canvasWrapRef">
+  <div class="pdf-viewer" ref="viewerRef">
 
     <SlideoutMenu v-model="slideOutMenuOpen" :is-fullscreen="isFullscreen" @fullscreen="handleFullScreen"
-      @sticky="handleSticky" @highlight="handleHighlight" @delete="handleDelete" @navigate="handleNavigation" />
+      @sticky="handleSticky" @highlight="handleHighlight" @delete="handleDelete" @download="handleDownload"
+      @navigate="handleNavigation" />
 
     <div class="page-nav primary">
       <div class="nav-group">
@@ -243,6 +238,9 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       <div class="spacer"></div>
 
       <div class="action-group">
+        <button :title="$t('fullscreen')" class="action-btn" @click="handleSave">
+          <Icon name="fa7-solid:save" />
+        </button>
         <button :title="$t('fullscreen')" class="action-btn" @click="handleFullScreen">
           <Icon :name="isFullscreen ? 'ic:outline-fullscreen-exit' : 'ic:outline-fullscreen'" />
         </button>
@@ -254,9 +252,13 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
       </div>
     </div>
 
-    <div class="canvas-wrap" ref="canvasWrapRef">
-      <canvas ref="canvasRef" class="pdf-canvas" />
-      <div ref="annotationLayerRef" class="annotation-layer" />
+    <div class="canvas-wrap" ref="canvasWrapRef" @click="onCanvasClick">
+      <div class="canvas-container">
+        <canvas ref="canvasRef" class="pdf-canvas" />
+        <StickyNote v-for="ann in annotations" :key="ann.id" :annotation="ann" :canvas-el="canvasRef"
+          :page-height="baseViewport.height" :scale="scale" @update="updateAnnotation" @delete="deleteAnnotation"
+          @drag-start="isAnnotationDragging = true" @drag-end="isAnnotationDragging = false" />
+      </div>
       <div v-if="isRendering" class="render-overlay">{{ $t('rendering') }}</div>
     </div>
 
@@ -275,6 +277,10 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   overflow: hidden;
 }
 
+.canvas-wrap:fullscreen {
+  overflow: visible !important;
+}
+
 .canvas-wrap {
   flex: 1;
   overflow: auto;
@@ -283,19 +289,16 @@ defineExpose({ prev, next, goTo, currentPage, totalPages, scale })
   justify-content: center;
   position: relative;
   -webkit-overflow-scrolling: touch;
-  /* smooth scroll on iOS */
 }
 
-.canvas-wrap:fullscreen {
-  overflow: visible !important;
-}
-
-.annotation-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  /* width: 100%; */
-  /* height: 100%; */
+.canvas-container {
+  position: relative;
+  /* Sticky notes anchor to this */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .pdf-canvas {

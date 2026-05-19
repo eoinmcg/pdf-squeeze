@@ -118,6 +118,21 @@ export const useFileStorage = () => {
     return fh.getFile() // returns a File object, ready for PDF.js
   }
 
+  const downloadFile = async (id: string) => {
+    const file = await loadFile(id)
+    const meta = await getMeta(id)
+
+    const url = URL.createObjectURL(file)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${meta.name}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+
+    URL.revokeObjectURL(url)
+  }
+
   async function hashBytes(bytes) {
     const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
     return [...new Uint8Array(hashBuffer)]
@@ -272,5 +287,5 @@ export const useFileStorage = () => {
     return saveFile(mergedFile)  // returns the new meta
   }
 
-  return { saveFile, loadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage, mergePdfs, testAnnotation, generateThumbnail, reorderPages }
+  return { saveFile, loadFile, downloadFile, getAllMeta, getMeta, updateMeta, deleteFile, deletePage, mergePdfs, testAnnotation, generateThumbnail, reorderPages }
 }

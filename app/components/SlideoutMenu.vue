@@ -10,7 +10,8 @@ const emit = defineEmits([
   'sticky',
   'highlight',
   'delete',
-  'navigate'
+  'navigate',
+  'download'
 ]);
 
 const target = ref(null);
@@ -79,6 +80,13 @@ onUnmounted(() => {
       <button @click="$emit('navigate', 'reorder')">
         {{ $t('reorder') }}
       </button>
+      <button @click="$emit('download')">
+        {{ $t('download') }}
+      </button>
+      <button @click="$emit('navigate', 'share')">
+        {{ $t('share') }}
+      </button>
+
       <button @click="$emit('navigate', 'merge')">
         {{ $t('merge') }}
       </button>
@@ -101,7 +109,7 @@ onUnmounted(() => {
   top: 0;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.8);
-  z-index: 1;
+  z-index: 1000;
   transition: all .2s linear;
   touch-action: pointer-events;
 }

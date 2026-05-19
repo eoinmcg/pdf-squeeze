@@ -1,9 +1,12 @@
 <script setup lang="ts">
 
+const route = useRoute()
+const ID = route.params.id as string
+
+const { toast } = useToast()
 const { t } = useI18n()
 
 const { loadFile, updateMeta, getMeta, deletePage } = useFileStorage()
-const route = useRoute()
 const fileMetaData = ref({
   id: null,
   name: '',
@@ -20,15 +23,12 @@ const error = ref(false)
 // prevent pdf getting stale
 const pdfReloadKey = ref(0)
 
-const ID = route.params.id as string
-
-const { toast } = useToast()
 
 onMounted(async () => {
   await loadPdf();
 })
 
-const loadPdf = async () => {
+const loadPdf = async (opts = {}) => {
 
   let meta = {}
 
@@ -69,6 +69,8 @@ const saveMetadata = async () => {
   await updateMeta(ID, { name: fileMetaData.value.name })
   toast(t('file_renamed'))
 }
+
+
 </script>
 
 
