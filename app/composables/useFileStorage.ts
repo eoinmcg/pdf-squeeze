@@ -1,4 +1,4 @@
-import { PDFDocument, PDFString, rgb } from 'pdf-lib'
+import { PDFDocument, PDFString, degrees } from 'pdf-lib'
 import { getDb } from '../lib/db'
 
 export const useFileStorage = () => {
@@ -208,59 +208,75 @@ export const useFileStorage = () => {
     });
   }
 
-  /**
-   * Reorders the pages of an existing PDF document in OPFS and matches IndexedDB metadata.
-   * @param id The document ID
-   * @param pageIndices Array of original 0-based indices in their new sequence (e.g., [2, 0, 1])
-   */
-  const reorderPages = async (id: string, pageIndices: number[]) => {
+  interface UpdatePagePayload {
+    id: string
+    thumbnail: string | null
+    annotations: any[]
+    sourceIndex: number | null
+    isBlank: boolean
+    rotation: number // Handle matching interface updates
+  }
+
+  const reorderPages = async (id: string, updatedPages: UpdatePagePayload[]) => {
     const root = await navigator.storage.getDirectory()
     const dir = await root.getDirectoryHandle('documents')
 
-    // 1. Get the file from OPFS
     const fileHandle = await dir.getFileHandle(`${id}.pdf`)
     const file = await fileHandle.getFile()
     const arrayBuffer = await file.arrayBuffer()
 
-    // 2. Load the source PDF and establish a clean target PDF
     const sourcePdfDoc = await PDFDocument.load(arrayBuffer)
     const targetPdfDoc = await PDFDocument.create()
 
-    // 3. Copy pages over in the new sequence ordered by the user
-    const copiedPages = await targetPdfDoc.copyPages(sourcePdfDoc, pageIndices)
+    for (const pageItem of updatedPages) {
+      let targetPage;
 
-    // 4. Inject the copied pages sequentially into your new document
-    copiedPages.forEach((page) => {
-      targetPdfDoc.addPage(page)
-    })
+      if (pageItem.isBlank || pageItem.sourceIndex === null) {
+        targetPage = targetPdfDoc.addPage([612, 792])
+      } else {
+        const [copiedPage] = await targetPdfDoc.copyPages(sourcePdfDoc, [pageItem.sourceIndex])
+        targetPage = targetPdfDoc.addPage(copiedPage)
+      }
 
-    // 5. Serialize to bytes
+      // Read existing source rotation if present, then combine it with user modifications
+      const baseRotation = pageItem.sourceIndex !== null
+        ? sourcePdfDoc.getPages()[pageItem.sourceIndex].getRotation().angle
+        : 0
+
+      // Total calculation relative to original baseline alignment coordinates
+      const finalAngle = (baseRotation + (pageItem.rotation || 0)) % 360
+
+      // Commit the change natively into the final file structure
+      targetPage.setRotation(degrees(finalAngle))
+    }
+
     const pdfBytes = await targetPdfDoc.save()
 
-    // 6. Write back to OPFS
     const writable = await fileHandle.createWritable()
     await writable.write(pdfBytes)
     await writable.close()
 
-    // 7. NEW: Synchronize your IndexedDB page metadata order
     const existingMeta = await getMeta(id)
+    const contentHash = await hashBytes(pdfBytes)
 
-    if (existingMeta && existingMeta.pages) {
-      // Re-map the pages array following the same layout map chosen by the user
-      const reorderedPages = pageIndices.map(index => existingMeta.pages[index])
+    const dbPagesLayout = updatedPages.map((payloadItem) => {
+      const historicalMetaItem =
+        payloadItem.sourceIndex !== null && existingMeta?.pages
+          ? existingMeta.pages[payloadItem.sourceIndex]
+          : null
 
-      // Compute the content hash alongside the updated page structure
-      const contentHash = await hashBytes(pdfBytes)
+      return {
+        id: payloadItem.id,
+        thumbnail: payloadItem.thumbnail,
+        annotations: historicalMetaItem?.annotations ?? [],
+        rotation: payloadItem.rotation // Store the rotation in IndexedDB state persistence loop
+      }
+    })
 
-      await updateMeta(id, {
-        contentHash,
-        pages: reorderedPages // Replaces the database array structure with the matching order
-      })
-    } else {
-      // Fallback if metadata wrapper didn't exist for some reason
-      const contentHash = hashBytes(pdfBytes)
-      await updateMeta(id, { contentHash })
-    }
+    await updateMeta(id, {
+      contentHash,
+      pages: dbPagesLayout
+    })
   }
 
   const mergePdfs = async (id1: string, id2: string, name: string) => {
